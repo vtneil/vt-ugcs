@@ -1,4 +1,5 @@
 import json
+from .__exception import ArgumentException
 
 
 class BasePreferencesTree:
@@ -7,9 +8,9 @@ class BasePreferencesTree:
         self.__filename = 'settings.json'
 
         if filename is not None and pref_dict is not None:
-            raise Exception('Wrong argument called on BasePreferencesTree!')
+            raise ArgumentException('Wrong argument called on BasePreferencesTree!')
         if filename is None and pref_dict is None:
-            raise Exception('No argument called on BasePreferencesTree!')
+            raise ArgumentException('No argument called on BasePreferencesTree!')
         if filename is not None:
             self.__filename = filename
             with open(filename, mode='r', encoding='utf-8') as __f:
