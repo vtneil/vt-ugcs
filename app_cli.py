@@ -55,7 +55,7 @@ class ProgramCLI:
                     self.queue_csv.push(dat)
                     self.queue_coord.push(GeoCoordinate(dat_dict['a'], dat_dict['b'], dat_dict['c']))
 
-                    print(self.data)
+                    print(self.data.back())
 
                 time.sleep(0.1)
         except KeyboardInterrupt:

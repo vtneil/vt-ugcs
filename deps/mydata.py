@@ -73,6 +73,9 @@ class Data:
         self.__headers = self.__data.columns.values.tolist()
         self.__dim = self.__headers.__len__()
 
+    def back(self) -> pd.Series:
+        return self.__data.iloc[-1]
+
     def push(self, data: list | tuple | np.ndarray):
         self.__iadd__(data)
 
