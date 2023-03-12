@@ -1,7 +1,7 @@
-from .base.__pref_tree import *
+from .base.__PrefTree import *
 
 
-class PreferencesTree(BasePreferencesTree):
+class PreferencesTree(PreferencesTreeBase):
     @staticmethod
     def from_file(filename: str):
         """

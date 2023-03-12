@@ -1,13 +1,13 @@
-from .base.__parser import *
-from .base.__exception import ConstructorException
+from .base.__Parser import *
+from .base.__CustomException import ConstructorException
 
 
-class StringParser(BaseParser):
+class StringParser(ParserBase):
     def __init__(self,
-                 data_format: Iterable[str] | Sized,
+                 data_format: list[str] | Iterable[str] | Sized,
                  delimiter: str = ',',
                  header: str = None,
-                 tail: str = None, /,
+                 tail: str = None,
                  *args, **kwargs):
         """
         Parse string with delimiter, header (if any), and tail (if any).
@@ -24,9 +24,9 @@ class StringParser(BaseParser):
         :param kwargs:
         """
         super().__init__(data_format, args, kwargs)
-        self.__header = header
-        self.__delimiter = delimiter
-        self.__tail = tail
+        self.__header = header or None
+        self.__delimiter = delimiter or ','
+        self.__tail = tail or None
 
         if self.__delimiter is None:
             raise ConstructorException('Delimiter cannot be None')
@@ -82,10 +82,9 @@ class StringParser(BaseParser):
         return self.__parse_with_header(__data[:-len(self.__tail)])
 
 
-class BytesParser(BaseParser):
+class BytesParser(ParserBase):
     def parse(self, *args, **kwargs) -> dict:
         pass
 
     def unparse(self, *args, **kwargs):
         pass
-

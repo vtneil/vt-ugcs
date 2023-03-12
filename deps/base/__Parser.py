@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from collections.abc import Sized
 
 
-class BaseParser:
+class ParserBase:
     def __init__(self,
                  data_format: Iterable[str] | Sized,
                  *args,

@@ -38,6 +38,9 @@ class GeoCoordinate:
     def __repr__(self):
         self.__str__()
 
+    def valid(self):
+        return 1 <= math.fabs(self.lat) <= 90 and 1 <= math.fabs(self.lon) <= 180
+
 
 class GeoPair:
     def __init__(self, coord_0: GeoCoordinate, coord_1: GeoCoordinate):

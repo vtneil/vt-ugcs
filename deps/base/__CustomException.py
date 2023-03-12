@@ -8,3 +8,7 @@ class ArgumentException(Exception):
 
 class SizeMismatchException(Exception):
     pass
+
+
+class NoDeviceFoundException(Exception):
+    pass
