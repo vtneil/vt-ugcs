@@ -1,4 +1,4 @@
-import logging as _logger
+import logging as _logging
 import os
 
 
@@ -7,7 +7,7 @@ class LoggerBase:
         if not os.path.exists("log/"):
             os.makedirs("log/")
 
-        self.logger = _logger
+        self.logger = _logging
         self.target = '[' + target.upper() + '] '
         self.logger.basicConfig(
             format='%(asctime)s\t[%(levelname)s]\tIn %(name)s\t%(message)s',

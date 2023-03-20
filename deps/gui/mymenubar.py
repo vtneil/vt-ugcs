@@ -11,5 +11,5 @@ MenuBar = html.Div([
                 dbc.NavLink('Info', href='/info', active='exact'),
             ], className='gap-2', pills=True)
         ])
-    ], className='p-3 bg-light rounded-3 w-100 mb-3'),
+    ], className='p-3 bg-light rounded-4 w-100 mb-3'),
 ], id='menubar')

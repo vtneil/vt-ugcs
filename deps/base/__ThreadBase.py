@@ -3,8 +3,9 @@ from .__Logger import LoggerBase
 
 
 class ThreadBase:
-    def __init__(self):
+    def __init__(self, timeout: float = 1.000):
         self._on = False
+        self._timeout = timeout
         self._thread: threading.Thread | None = None
 
     def start(self):
@@ -13,7 +14,7 @@ class ThreadBase:
 
     def stop(self):
         self._destroy_thread()
-        self._logger.info('Thread is stop and destroyed!')
+        self._logger.info('Thread is stopped and destroyed!')
 
     def _setup_thread(self):
         self._on = True
@@ -25,7 +26,7 @@ class ThreadBase:
     def _destroy_thread(self):
         if isinstance(self._thread, threading.Thread):
             self._on = False
-            self._thread.join()
+            self._thread.join(timeout=self._timeout)
             self._thread = None
 
     def _task(self):

@@ -40,18 +40,23 @@ class SerialPort:
 
         name = name.strip()
         if not override:
-            if '(' in name and ')' in name:
-                if name not in self.__port_pair:
-                    raise NoDeviceFoundException('No device named "{}"!'.format(name))
-                __name = self.__port_pair[name]
-            else:
-                if name not in self.__port_pair.values():
-                    raise NoDeviceFoundException('No device named "{}"!'.format(name))
-                __name = name
+            try:
+                if '(' in name and ')' in name:
+                    if name not in self.__port_pair:
+                        raise NoDeviceFoundException('No device named "{}"!'.format(name))
+                    __name = self.__port_pair[name]
+                else:
+                    if name not in self.__port_pair.values():
+                        raise NoDeviceFoundException('No device named "{}"!'.format(name))
+                    __name = name
+            except NoDeviceFoundException:
+                if not attempt_reconnect:
+                    self.__logger.warn('Device not found!'.format(name))
+                return False
         else:
             __name = name
 
-        if isinstance(self.__device, serial.Serial):
+        if isinstance(self.__device, serial.Serial) and not attempt_reconnect:
             self.__logger.info('Clearing connection from "{}" before connecting "{}".'.format(
                 self.__name, __name)
             )
@@ -156,13 +161,20 @@ class SerialPort:
 
     def __try_reconnect(self):
         result = True
+        attempt_no = 20
         while self.__flag_reconnect:
             if not self.is_connected():
                 self.__logger.warn('Attempting to reconnect "{}"...'.format(self.__name))
                 try:
-                    result = self.connect(self.__name, self.__baud, auto_reconnect=False, attempt_reconnect=True)
+                    for i in range(attempt_no):
+                        result = self.connect(self.__name, self.__baud,
+                                              auto_reconnect=False,
+                                              attempt_reconnect=True)
+                        if result:
+                            break
+                        time.sleep(2.000 / attempt_no)
                 except serial.SerialException or FileNotFoundError:
-                    time.sleep(2.000)
+                    pass
             if result:
                 time.sleep(0.100)
             else:

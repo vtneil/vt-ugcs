@@ -11,6 +11,8 @@ class Queue:
         A deque wrapper for ease of use.
         It is thread-safe according to Python docs.
 
+        The queue is simply a "buffer"
+
         """
         self.__queue = deque()
 
@@ -90,6 +92,9 @@ class Data:
         for i in range(n):
             self.__data.drop(self.__data.index[-1], inplace=True)
         self.__data.reset_index(drop=True, inplace=True)
+
+    def available(self):
+        return self.__len__() > 0
 
     def __getitem__(self, item):
         return self.__data.__getitem__(item)

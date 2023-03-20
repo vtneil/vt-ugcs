@@ -11,7 +11,8 @@ class ThreadSerial(ThreadBase):
     def __init__(self, reader: SerialReader,
                  parser: ParserBase,
                  queue: Queue,
-                 interval: float = 0.050):
+                 interval: float = 0.050,
+                 timeout: float = 4.000):
         """
         Specialized Serial Thread
 
@@ -21,7 +22,7 @@ class ThreadSerial(ThreadBase):
         :param interval: Serial Buffer polling interval in s, default is 50 ms
         """
 
-        super().__init__()
+        super().__init__(timeout)
         self.__reader = reader
         self.__parser = parser
         self.__queue = queue
@@ -39,6 +40,14 @@ class ThreadSerial(ThreadBase):
 
             time.sleep(self.__interval)
 
+        # Clear remaining data from the queue
+        self.__reader.read()
+        while self.__reader.available():
+            msg = self.__reader.get_message()
+            if len(msg) > 0:
+                parsed_msg = self.__parser.parse(msg)
+                self.__queue.push(parsed_msg)
+
     @property
     def queue(self):
         return self.__queue
@@ -52,7 +61,8 @@ class ThreadFileWriter(ThreadBase):
     def __init__(self, file_writer: FileWriter,
                  queue_csv: Queue,
                  queue_coord: Queue,
-                 interval: float = 0.050):
+                 interval: float = 0.050,
+                 timeout: float = 4.000):
         """
         Specialized Thread for writing files in the background without blocking main thread.
 
@@ -62,7 +72,7 @@ class ThreadFileWriter(ThreadBase):
         :param interval: Serial Buffer polling interval in s, default is 50 ms
         """
 
-        super().__init__()
+        super().__init__(timeout)
         self.__writer = file_writer
         self.__queue_csv = queue_csv
         self.__queue_coord = queue_coord
@@ -80,6 +90,15 @@ class ThreadFileWriter(ThreadBase):
                 self.__writer.append_coord(dat)
 
             time.sleep(self.__interval)
+
+        # Clear remaining data from the queue
+        while self.__queue_csv.available():
+            dat = self.__queue_csv.pop()
+            self.__writer.append_csv(dat)
+
+        while self.__queue_coord.available():
+            dat = self.__queue_coord.pop()
+            self.__writer.append_coord(dat)
 
     @property
     def queue_csv(self):

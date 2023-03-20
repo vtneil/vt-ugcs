@@ -2,6 +2,7 @@ from .base.__CustomException import ArgumentException
 from .base.__CustomException import ConstructorException
 from .base.__CustomException import SizeMismatchException
 from .base.__CustomException import NoDeviceFoundException
+from .base.__Program import Program
 
 from .mypref import PreferencesTree
 

@@ -1,9 +1,8 @@
 import time
-
 from deps import *
 
 
-class ProgramCLI:
+class ProgramCLI(Program):
     def __init__(self):
         self.settings = PreferencesTree.from_file('settings.json')
         self.data_format = PreferencesTree.from_file('data_format.json')
@@ -18,7 +17,7 @@ class ProgramCLI:
         self.port = SerialPort()
         self.port_name = ''
         self.baud = 115200
-        self.serial_reader: SerialReader | None = None
+        self.serial_reader = SerialReader(self.port)
         self.serial_thread: ThreadSerial | None = None
 
         self.queue = Queue()
@@ -30,7 +29,6 @@ class ProgramCLI:
     def start(self):
         self.__prompt_user()
         self.port.connect(self.port_name, self.baud)
-        self.serial_reader = SerialReader(self.port)
         self.serial_thread = ThreadSerial(self.serial_reader, self.parser, self.queue)
         self.serial_thread.start()
 
