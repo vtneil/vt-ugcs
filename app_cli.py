@@ -9,6 +9,9 @@ class ProgramCLI(Program):
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
+        self.key_lat = self.settings['lat_key']
+        self.key_lon = self.settings['lon_key']
+        self.key_alt = self.settings['alt_key']
 
         self.parser = StringParser(self.data_format['0'], header='DEV0,')
         self.writer = FileWriter(__file__, self.file_name, self.extension)
@@ -51,7 +54,9 @@ class ProgramCLI(Program):
 
                     self.data.push(dat)
                     self.queue_csv.push(dat)
-                    self.queue_coord.push(GeoCoordinate(dat_dict['a'], dat_dict['b'], dat_dict['c']))
+                    self.queue_coord.push(
+                        GeoCoordinate(dat_dict[self.key_lat], dat_dict[self.key_lon], dat_dict[self.key_alt])
+                    )
 
                     print(self.data.back())
 

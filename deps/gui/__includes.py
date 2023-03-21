@@ -1,13 +1,13 @@
 import os as __os
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Dash, Input, Output, State, ctx
+from .parameters import *
+
 
 # Dash Bootstrap Cheatsheet at https://dashcheatsheet.pythonanywhere.com/
-
-
-APP_TITLE = 'VNET Universal Ground Control Station'
 
 
 def h2(text: str):

@@ -55,7 +55,7 @@ class Queue:
 
 
 class Data:
-    def __init__(self, data_or_header: dict | pd.DataFrame | Iterable = None):
+    def __init__(self, data_or_header: dict | pd.DataFrame | Iterable = None, trim_len: int = None):
         """
         A wrapper class around Pandas DataFrame for ease of usages.
         Still, you can manipulate the DataFrame data directly.
@@ -119,7 +119,7 @@ class Data:
         return self.__data.__repr__()
 
     @property
-    def data(self):
+    def df(self):
         return self.__data
 
     @property
@@ -139,8 +139,8 @@ class Data:
         """
         return self.__len__(), self.__dim
 
-    @data.setter
-    def data(self, value: pd.DataFrame):
+    @df.setter
+    def df(self, value: pd.DataFrame):
         self.__data = value
 
     @staticmethod

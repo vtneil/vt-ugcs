@@ -14,6 +14,7 @@ class ProgramGUI(Program):
     app = Dash(
         APP_NAME,
         assets_folder='deps/gui/assets',
+        meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
         prevent_initial_callbacks=True,
         suppress_callback_exceptions=True,
     )
@@ -36,10 +37,16 @@ class ProgramGUI(Program):
 
         # Backend: General Components
         self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'))
-        self.data_format = PreferencesTree.from_file('data_format.json')
+        self.data_format = PreferencesTree.from_file(os.path.abspath('data_format.json'))
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
+        self.key_lat = self.settings['lat_key']
+        self.key_lon = self.settings['lon_key']
+        self.key_alt = self.settings['alt_key']
+        self.to_plot = self.settings['plot']  # self.to_plot[device_id][idx]['x' or 'y']
+        self.trim_length = self.settings['plot_limit']
+        self.all_charts = []
 
         # Backend: Serial Components
         self.serial_port = SerialPort()
@@ -89,8 +96,8 @@ class ProgramGUI(Program):
         )
         def render_table(_intervals):
             data = pd.DataFrame({
-                'Key': self.data_format['0'],
-                'Value': self.data.back().to_list() if self.data.available() else [None] * len(self.data_format['0'])
+                'key': self.data_format['0'],
+                'value': self.data.back().to_list() if self.data.available() else [None] * len(self.data_format['0'])
             })
             return dbc.Table.from_dataframe(
                 data,
@@ -124,19 +131,6 @@ class ProgramGUI(Program):
             new_opt = [{'label': k, 'value': k} for k in all_ports]
             return new_opt, ALL_BAUD_OPT
 
-        # Change backend serial information on dropdown input change
-        @app.callback(
-            Output('hidden-div', 'children'),
-            [
-                Input(Component.dropdown_port, 'value'),
-                Input(Component.dropdown_baud, 'value')
-            ]
-        )
-        def read_serial_opt(serial_port, serial_baud):
-            self.port_name = serial_port or self.port_name
-            self.port_baud = self.port_baud if serial_baud is None else int(serial_baud)
-            return []
-
         # Lock serial elements on connection and disconnection
         @app.callback(
             [
@@ -149,11 +143,17 @@ class ProgramGUI(Program):
                 Input(Component.btn_connect, 'n_clicks'),
                 Input(Component.btn_disconnect, 'n_clicks'),
                 Input(Component.interval_slow, 'n_intervals'),
+            ],
+            [
+                State(Component.dropdown_port, 'value'),
+                State(Component.dropdown_baud, 'value')
             ]
         )
-        def btn_serial_connect(_connect, _disconnect, _intervals):
+        def btn_serial_connect(_connect, _disconnect, _intervals, serial_port, serial_baud):
             btn_clicked = ctx.triggered_id
             if btn_clicked == Component.btn_connect.id:
+                self.port_name = serial_port or self.port_name
+                self.port_baud = self.port_baud if serial_baud is None else int(serial_baud)
                 self.__connect_serial()
                 self.__start()
             elif btn_clicked == Component.btn_disconnect.id:
@@ -173,22 +173,89 @@ class ProgramGUI(Program):
                     False, False
                 )
 
-        # Render initial charts
+        # Refresh Data View Dropdown
         @app.callback(
-            Output(Component.plot_area, 'children'),
+            [
+                Output(Component.dropdown_plot_x, 'options'),
+                Output(Component.dropdown_plot_y, 'options'),
+                Output(Component.dropdown_plot_z, 'options')
+            ],
+            Input(Component.interval_once, 'n_intervals')
+        )
+        def render_data_view_table(_interval):
+            __list = [{'label': k, 'value': k} for k in self.data_format['0']]
+            return __list, __list, __list
+
+        # Render charts
+        @app.callback(
+            [
+                Output(Component.plot_col1, 'children'),
+                Output(Component.plot_col2, 'children'),
+                Output(Component.plot_col3, 'children'),
+            ],
             [
                 Input(Component.interval_once, 'n_intervals'),
-                Input(Component.btn_add_chart, 'n_clicks'),  # todo
+                Input(Component.interval_slow, 'n_intervals'),
+                Input(Component.btn_add_chart, 'n_clicks')
+            ],
+            [
+                State(Component.dropdown_plot_x, 'value'),
+                State(Component.dropdown_plot_y, 'value'),
+                State(Component.dropdown_plot_z, 'value')
             ]
         )
-        def add_chart(_intervals, _clicks):
+        def add_chart(_intervals_1, _intervals_2, _clicks, x_val, y_vals, z_val):
             event = ctx.triggered_id
-            if event == Component.interval_once.id and self.first_load:
+
+            event_first_load = (event == Component.interval_once.id and self.first_load)
+            event_click_add = (event == Component.btn_add_chart.id and x_val and y_vals)
+            event_polling = (event == Component.interval_slow.id and not self.first_load)
+
+            # First Load
+            if event_first_load:
                 self.first_load = False
-                Component.plot_area.children.append(Component.frame_chart(self.data.data, 'a', 'b'))
-            elif event == Component.btn_add_chart.id:
-                Component.plot_area.children.append(Component.frame_chart(self.data.data, 'a', 'b'))
-            return Component.plot_area.children
+                for device_id, device_plot_list in self.settings['plot'].items():
+                    for plot_item in device_plot_list:
+                        __new_chart = Component.make_plot_area(
+                            self.data.df.tail(self.trim_length), plot_item['x'], plot_item['y']
+                        )
+                        Component.plot_col1.children.append(__new_chart)
+                        self.all_charts.append({
+                            'x': plot_item['x'],
+                            'y': plot_item['y'],
+                            'z': plot_item['z'] if 'z' in plot_item else None,
+                        })
+
+            # When Click Add Chart
+            elif event_click_add:
+                __new_chart = Component.make_plot_area(self.data.df.tail(self.trim_length), x_val, y_vals, z_val)
+                Component.plot_col1.children.append(__new_chart)
+                self.all_charts.append({
+                    'x': x_val,
+                    'y': y_vals,
+                    'z': z_val,
+                })
+
+            # Data Polling/Updating
+            elif event_polling:
+                for i, (__chart, __child) in enumerate(zip(self.all_charts, Component.plot_col1.children)):
+                    Component.plot_col1.children[i] = Component.make_plot_area(
+                        self.data.df.tail(self.trim_length), __chart['x'], __chart['y'], __chart['z']
+                    )
+
+            layout = Content.make_plot_layout_2d(Component.plot_col1.children,
+                                                 Component.plot_col2.children,
+                                                 Component.plot_col3.children)
+            return layout
+
+        @app.callback(
+            Output('hidden-div', 'children'),
+            Input(Component.btn_pop_chart, 'n_clicks')
+        )
+        def pop_data(_clicks):
+            if self.data.available():
+                self.data.pop()
+            return []
 
     def __start(self):
         """
@@ -217,13 +284,30 @@ class ProgramGUI(Program):
         self.serial_port.disconnect()
         self.serial_connection = False
 
+    def __backend_mock(self):
+        i = 0
+        while self.backend_status:
+            self.data.push([
+                0.5 * i ** 2 + 0.8 * j ** 2 if j > 1 else (0 if j == 0 else i)
+                for j in range(len(self.data_format['0']))
+            ])
+            i += 1
+            time.sleep(1.000)
+
     def __backend(self):
+        self.__backend_mock()
+
         while self.backend_status:
             if self.queue_serial.available():
                 dat_dict: dict = self.queue_serial.pop()
                 dat = list(dat_dict.values())
+
                 self.data.push(dat)
+                self.queue_coord.push(
+                    GeoCoordinate(dat_dict[self.key_lat], dat_dict[self.key_lon], dat_dict[self.key_alt])
+                )
                 self.queue_csv.push(dat)
+
                 self.data_no += 1
 
             time.sleep(0.100)

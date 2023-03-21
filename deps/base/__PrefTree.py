@@ -9,9 +9,9 @@ class PreferencesTreeBase:
         self.__filename = 'settings.json'
 
         if filename is not None and pref_dict is not None:
-            raise ArgumentException('Wrong argument called on BasePreferencesTree!')
+            raise ArgumentException('Wrong argument called on {}!'.format(self.__class__.__name__))
         if filename is None and pref_dict is None:
-            raise ArgumentException('No argument called on BasePreferencesTree!')
+            raise ArgumentException('No argument called on {}!'.format(self.__class__.__name__))
         if filename is not None:
             self.__filename = filename
             with open(filename, mode='r', encoding='utf-8') as __f:
@@ -20,7 +20,7 @@ class PreferencesTreeBase:
             self.__pref = pref_dict
 
     @property
-    def tree(self):
+    def tree(self) -> dict:
         return self.__pref
 
     def __getitem__(self, item: str):

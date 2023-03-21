@@ -3,20 +3,27 @@
     "delimiter": ",",
     "file_name": "test",
     "file_extension": "csv",
-    "use_plot": {
-        "x": "packet_count",
-        "y": [
-            "bar_alt",
-            "temp1",
-            "gps_alt",
-            "acc_x",
-            "batt_volt",
-            "temp2",
-            "imu_alt",
-            "gps_lat",
-            "gps_lon"
+    "lat_key": "lat",
+    "lon_key": "lon",
+    "alt_key": "alt",
+    "plot": {
+        "0": [
+            {
+                "x": "packet_id",
+                "y": ["field1"]
+            },
+            {
+                "x": "packet_id",
+                "y": ["field2", "field8"]
+            },
+            {
+                "x": "field1",
+                "y": ["field2"],
+                "z": "field3"
+            }
         ]
     },
+    "plot_limit": 10,
     "state_key": "state",
     "state_name": {
         "1": "PRELAUNCH",

@@ -1,14 +1,14 @@
 {
     "0": [
         "device_id",
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f",
-        "g",
-        "h",
-        "i"
+        "packet_id",
+        "field1",
+        "field2",
+        "field3",
+        "field4",
+        "field5",
+        "field6",
+        "field7",
+        "field8"
     ]
 }
