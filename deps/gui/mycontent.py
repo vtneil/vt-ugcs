@@ -7,6 +7,17 @@ INTERVAL_FAST = 200
 
 
 class Chart:
+    PLOT_XYZ = 'xyz'
+    PLOT_POLAR = 'polar'
+
+    STYLE_LINE = 'line'
+    STYLE_SCATTER = 'scatter'
+    STYLE_BAR = 'bar'
+
+    LINE_TYPES = ['line', 'scatter']
+    POLAR_TYPES = ['bar', 'scatter']
+    MARGIN = dict(l=20, r=20, t=100, b=20)
+
     @staticmethod
     def make_chart_title(y: str, x: str, z: str = None):
         if z is None:
@@ -18,10 +29,8 @@ class Chart:
         fig = px.line(
             data, x=x_key, y=y_keys, title=Chart.make_chart_title(','.join(y_keys), x_key),
         )
-        fig.update_layout(margin=dict(l=20, r=20, t=100, b=20))
-        return dcc.Graph(
-            figure=fig,
-        )
+        fig.update_layout(margin=Chart.MARGIN)
+        return Chart.__make_dcc(fig)
 
     @staticmethod
     def make_line_chart_3d(data: pandas.DataFrame, x_key: str, y_key: str, z_key: str):
@@ -31,20 +40,51 @@ class Chart:
         fig = px.line_3d(
             data, x=x_key, y=y_key, z=z_key, title='3D: ' + Chart.make_chart_title(y_key, x_key, z_key)
         )
-        fig.update_layout(margin=dict(l=20, r=20, t=100, b=20), scene_camera=camera)
-        return dcc.Graph(
-            figure=fig,
-        )
+        fig.update_layout(margin=Chart.MARGIN, scene_camera=camera)
+        return Chart.__make_dcc(fig)
 
     @staticmethod
-    def make_bar_polar_chart(data: pandas.DataFrame, r: str, theta: str):
-        fig = px.bar_polar(
-            data, r, theta, title='Polar Chart',
-            color_discrete_sequence=px.colors.sequential.Plasma_r
+    def make_scatter_chart_2d(data: pandas.DataFrame, x_key: str, y_keys: list[str]):
+        fig = px.scatter(
+            data, x=x_key, y=y_keys, title=Chart.make_chart_title(','.join(y_keys), x_key),
         )
-        fig.update_layout(margin=dict(l=20, r=20, t=100, b=20))
+        fig.update_layout(margin=Chart.MARGIN)
+        return Chart.__make_dcc(fig)
+
+    @staticmethod
+    def make_scatter_chart_3d(data: pandas.DataFrame, x_key: str, y_key: str, z_key: str):
+        camera = dict(
+            eye=dict(x=1.5, y=2, z=0.1)
+        )
+        fig = px.scatter_3d(
+            data, x=x_key, y=y_key, z=z_key, title='3D: {}'.format(Chart.make_chart_title(y_key, x_key, z_key))
+        )
+        fig.update_layout(margin=Chart.MARGIN, scene_camera=camera)
+        return Chart.__make_dcc(fig)
+
+    @staticmethod
+    def make_bar_polar_chart(data: pandas.DataFrame, r: str | list[str], theta: str):
+        fig = px.bar_polar(
+            data, r, theta, title='Polar: r: {} - theta: {}'.format(r, theta),
+        )
+        fig.update_layout(margin=Chart.MARGIN)
+        return Chart.__make_dcc(fig)
+
+    @staticmethod
+    def make_scatter_polar_chart(data: pandas.DataFrame, r: str | list[str], theta: str):
+        fig = px.scatter_polar(
+            data, r, theta, title='Polar: r: {} - theta: {}'.format(r, theta),
+        )
+        fig.update_layout(margin=Chart.MARGIN)
+        return Chart.__make_dcc(fig)
+
+    @staticmethod
+    def __make_dcc(fig):
         return dcc.Graph(
             figure=fig,
+            config={
+                'displayModeBar': False
+            }
         )
 
 
@@ -121,13 +161,32 @@ class Component:
         [], id='dropdown-plot-z'
     )
 
-    btn_add_chart = dbc.Button('Add Chart', id='btn-add-chart',
-                               className='mx-1 btn-primary')
+    dropdown_plot_xyz_type = dcc.Dropdown(
+        [], id='dropdown-plot-xyz-type'
+    )
+
+    dropdown_plot_r = dcc.Dropdown(
+        [], id='dropdown-plot-r'
+    )
+
+    dropdown_plot_theta = dcc.Dropdown(
+        [], id='dropdown-plot-theta'
+    )
+
+    dropdown_plot_rt_type = dcc.Dropdown(
+        [], id='dropdown-plot-rt-type'
+    )
+
+    btn_add_chart_xyz = dbc.Button('Add Chart to View', id='btn-add-chart-xyz',
+                                   className='mx-1 btn-primary')
+
+    btn_add_chart_polar = dbc.Button('Add Chart to View', id='btn-add-chart-polar',
+                                     className='mx-1 btn-primary')
 
     btn_pop_chart = dbc.Button('Pop Last Data', id='btn-pop-chart',
                                className='mx-1 btn-danger')
 
-    sidebar_ctrl = html.Div([
+    sidebar_page1 = dbc.Card(dbc.CardBody([
         dbc.Label('X Axis', html_for='dropdown-plot-x'),
         dropdown_plot_x,
         html.Br(),
@@ -137,7 +196,31 @@ class Component:
         dbc.Label('Z Axis (Optional), choose 1 Y only.', html_for='dropdown-plot-z'),
         dropdown_plot_z,
         html.Br(),
-        btn_add_chart,
+        dbc.Label('Line Type', html_for='dropdown-plot-xyz-type'),
+        dropdown_plot_xyz_type,
+        html.Br(),
+        btn_add_chart_xyz,
+    ]), className='mt-3 mb-3')
+
+    sidebar_page2 = dbc.Card(dbc.CardBody([
+        dbc.Label('Polar r', html_for='dropdown-plot-r'),
+        dropdown_plot_r,
+        html.Br(),
+        dbc.Label('Polar theta', html_for='dropdown-plot-theta'),
+        dropdown_plot_theta,
+        html.Br(),
+        dbc.Label('Plotting Type', html_for='dropdown-plot-rt-type'),
+        dropdown_plot_rt_type,
+        html.Br(),
+        btn_add_chart_polar,
+    ]), className='mt-3 mb-3')
+
+    sidebar_ctrl = html.Div([
+        dbc.Tabs([
+            dbc.Tab(sidebar_page1, label='XYZ Graph'),
+            dbc.Tab(sidebar_page2, label='Polar Graph'),
+            dbc.Tab(html.Div([]), label='Other', disabled=True),
+        ]),
         btn_pop_chart
     ])
 
@@ -151,7 +234,9 @@ class Component:
         html.Hr(),
 
         html.H3('Serial Connection'),
-        serial_options,
+        dbc.Card(dbc.CardBody([
+            serial_options
+        ]), className='mt-3 mb-3'),
         html.Hr(),
     ])
 
@@ -163,17 +248,40 @@ class Component:
     plot_area = dbc.Row([plot_col1, plot_col2, plot_col3])
 
     @staticmethod
-    def make_new_chart(data: pandas.DataFrame, x_key: str, y_keys: list[str] | str, z_key: str):
-        if z_key is not None and isinstance(y_keys, str):
-            return Chart.make_line_chart_3d(data, x_key, y_keys, z_key)
-        elif z_key is not None and isinstance(y_keys, list):
-            return Chart.make_line_chart_3d(data, x_key, y_keys[0], z_key)
-        else:
+    def make_new_chart(
+            data: pandas.DataFrame,
+            x_key: str, y_keys: list[str] | str, z_key: str,
+            r_key: str, theta_key: str,
+            line_style: str, plot_type: str):
+        if plot_type == 'xyz':
+            if z_key is not None:
+                if isinstance(y_keys, str):
+                    # 3D line chart with one Y.
+                    if line_style == 'scatter':
+                        return Chart.make_scatter_chart_3d(data, x_key, y_keys, z_key)
+                    return Chart.make_line_chart_3d(data, x_key, y_keys, z_key)
+                elif isinstance(y_keys, list):
+                    # 3D line chart with many Y inputs -> Choose only first one.
+                    if line_style == 'scatter':
+                        return Chart.make_scatter_chart_3d(data, x_key, y_keys[0], z_key)
+                    return Chart.make_line_chart_3d(data, x_key, y_keys[0], z_key)
+
+            if line_style == 'scatter':
+                return Chart.make_scatter_chart_2d(data, x_key, y_keys)
+            # Default chart type: 2D line chart
             return Chart.make_line_chart_2d(data, x_key, y_keys)
+        elif plot_type == 'polar':
+            if line_style == 'bar':
+                return Chart.make_bar_polar_chart(data, r_key, theta_key)
+            return Chart.make_scatter_polar_chart(data, r_key, theta_key)
 
     @staticmethod
-    def make_plot_area(data: pandas.DataFrame, x_key: str, y_keys: list[str] | str, z_key: str = None):
-        __graph = Component.make_new_chart(data, x_key, y_keys, z_key)
+    def make_plot_area(
+            data: pandas.DataFrame,
+            x_key: str = None, y_keys: list[str] | str = None, z_key: str = None,
+            r_key: str = None, theta_key: str = None,
+            line_style: str = 'line', plot_type: str = 'xyz'):
+        __graph = Component.make_new_chart(data, x_key, y_keys, z_key, r_key, theta_key, line_style, plot_type)
         return html.Div([
             __graph
         ])
@@ -190,7 +298,7 @@ class Content:
             dbc.Col(Component.sidebar, width=3),
             dbc.Col(Component.plot_area, width=9),
         ], ),
-    ], fluid=True)])
+    ], fluid=True)], className='mb-5')
 
     settings = html.Div([dbc.Container([
         h2('Settings'),
@@ -215,18 +323,13 @@ class Content:
         ),
 
         html.P('', id='test-box')
-    ], fluid=True)])
+    ], fluid=True)], className='mb-5')
 
     @staticmethod
-    def make_plot_layout_2d(*components: list, cols: int = 3):
-        flats = [e for sub in components for e in sub]
-        layout = []
-        n_full, remainder = divmod(len(flats), cols)
-        for i in range(cols):
-            layout.append(flats[i * n_full: (i + 1) * n_full])
-        for i in range(remainder):
-            layout[i].append(flats[cols * n_full + i])
-
+    def de_flatten(flats: list, cols: int = 3):
+        layout = [[] for _ in range(cols)]
+        for i, e in enumerate(flats):
+            layout[i % cols].append(e)
         return layout
 
     @staticmethod

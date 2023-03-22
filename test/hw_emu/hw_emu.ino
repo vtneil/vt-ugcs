@@ -21,8 +21,6 @@ void fn() {
     Serial.print(s);
   } else {
     digitalWrite(LED_PIN, HIGH);
-    String s = "DEV0,1,2,3,4\n";
-    Serial.print(s);
   }
   led_state ^= 1;
 }

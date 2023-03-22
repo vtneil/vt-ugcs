@@ -65,62 +65,68 @@ class Data:
         if isinstance(data_or_header, dict) or isinstance(data_or_header, pd.DataFrame):
             # is data
             try:
-                self.__data = pd.DataFrame(data_or_header)
+                self.__df = pd.DataFrame(data_or_header)
             except ValueError:
-                self.__data = pd.DataFrame()
+                self.__df = pd.DataFrame()
         else:
             # is header
-            self.__data = pd.DataFrame({k: [] for k in data_or_header})
+            self.__df = pd.DataFrame({k: [] for k in data_or_header})
 
-        self.__headers = self.__data.columns.values.tolist()
+        self.__headers = self.__df.columns.values.tolist()
         self.__dim = self.__headers.__len__()
 
+    def front(self) -> pd.Series:
+        return self.__df.iloc[0]
+
     def back(self) -> pd.Series:
-        return self.__data.iloc[-1]
+        return self.__df.iloc[-1]
 
     def push(self, data: list | tuple | np.ndarray):
         self.__iadd__(data)
 
     def pop(self, n: int = -1):
-        self.__data.drop(self.__data.index[n], inplace=True)
-        self.__data.reset_index(drop=True, inplace=True)
+        self.__df.drop(self.__df.index[n], inplace=True)
+        self.__df.reset_index(drop=True, inplace=True)
 
     def pop_many(self, n: int):
         if n < 1:
             return
         n = min(n, self.__len__())
         for i in range(n):
-            self.__data.drop(self.__data.index[-1], inplace=True)
-        self.__data.reset_index(drop=True, inplace=True)
+            self.__df.drop(self.__df.index[-1], inplace=True)
+        self.__df.reset_index(drop=True, inplace=True)
 
     def available(self):
         return self.__len__() > 0
 
+    def clear(self):
+        pass
+
     def __getitem__(self, item):
-        return self.__data.__getitem__(item)
+        return self.__df.__getitem__(item)
 
     def __iadd__(self, other: list | tuple | np.ndarray):
         if other.__len__() == self.__dim:
-            self.__data.loc[self.__len__()] = other
+            self.__df.loc[self.__len__()] = other
             return self
 
     def __add__(self, other: list | tuple | np.ndarray):
-        __data = Data(self.__data)
+        __data = Data(self.__df)
         __data.__iadd__(other)
         return __data
 
     def __len__(self):
-        return self.__data.__len__()
+        return self.__df.__len__()
 
     def __str__(self):
-        return self.__data.__str__()
+        return self.__df.__str__()
 
     def __repr__(self):
-        return self.__data.__repr__()
+        return self.__df.__repr__()
 
     @property
     def df(self):
-        return self.__data
+        return self.__df
 
     @property
     def headers(self):
@@ -141,14 +147,14 @@ class Data:
 
     @df.setter
     def df(self, value: pd.DataFrame):
-        self.__data = value
+        self.__df = value
 
     @staticmethod
     def from_df(data: pandas.DataFrame):
         return Data(data)
 
     def __copy__(self):
-        return Data(self.__data)
+        return Data(self.__df)
 
     def copy(self):
         return self.__copy__()

@@ -51,12 +51,11 @@ class ProgramCLI(Program):
                 if self.queue.available():
                     dat_dict: dict = self.queue.pop()
                     dat = list(dat_dict.values())
-
                     self.data.push(dat)
                     self.queue_csv.push(dat)
-                    self.queue_coord.push(
-                        GeoCoordinate(dat_dict[self.key_lat], dat_dict[self.key_lon], dat_dict[self.key_alt])
-                    )
+                    # self.queue_coord.push(
+                    #     GeoCoordinate(dat_dict[self.key_lat], dat_dict[self.key_lon], dat_dict[self.key_alt])
+                    # )
 
                     print(self.data.back())
 

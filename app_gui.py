@@ -6,7 +6,7 @@ from deps import *
 from deps.gui import *
 
 APP_NAME = __name__
-USE_DEBUG = True
+USE_DEBUG = False
 ALL_BAUD_OPT = [{'label': k, 'value': k} for k in ALL_BAUD_STR]
 
 
@@ -17,16 +17,18 @@ class ProgramGUI(Program):
         meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
         prevent_initial_callbacks=True,
         suppress_callback_exceptions=True,
+        title=APP_TITLE
     )
 
     def __init__(self):
         # Flask App
-        self.app.title = APP_TITLE
         self.app.layout = html.Div([
             dbc.Container([
                 dcc.Location(id='url'),
                 MenuBar,
-                Content.content,
+                html.Div([
+                    Content.content
+                ], className='mt-5 pt-5 pb-5'),
                 Component.interval_slow,
                 Component.interval_fast,
                 Component.interval_once
@@ -47,6 +49,8 @@ class ProgramGUI(Program):
         self.to_plot = self.settings['plot']  # self.to_plot[device_id][idx]['x' or 'y']
         self.trim_length = self.settings['plot_limit']
         self.all_charts = []
+        self.all_plots = []
+        self.data_options = [{'label': k, 'value': k} for k in self.data_format['0']]
 
         # Backend: Serial Components
         self.serial_port = SerialPort()
@@ -125,7 +129,7 @@ class ProgramGUI(Program):
             ],
             Input(Component.interval_slow, 'n_intervals')
         )
-        def render_serial_port(_interval):
+        def render_serial_options(_interval):
             self.serial_port.refresh()
             all_ports = self.serial_port.port_pair.keys()
             new_opt = [{'label': k, 'value': k} for k in all_ports]
@@ -178,13 +182,19 @@ class ProgramGUI(Program):
             [
                 Output(Component.dropdown_plot_x, 'options'),
                 Output(Component.dropdown_plot_y, 'options'),
-                Output(Component.dropdown_plot_z, 'options')
+                Output(Component.dropdown_plot_z, 'options'),
+                Output(Component.dropdown_plot_r, 'options'),
+                Output(Component.dropdown_plot_theta, 'options'),
+                Output(Component.dropdown_plot_xyz_type, 'options'),
+                Output(Component.dropdown_plot_rt_type, 'options'),
             ],
-            Input(Component.interval_once, 'n_intervals')
+            [
+                Input(Component.interval_slow, 'n_intervals'),
+            ]
         )
-        def render_data_view_table(_interval):
-            __list = [{'label': k, 'value': k} for k in self.data_format['0']]
-            return __list, __list, __list
+        def render_data_view_options(_interval):
+            return self.data_options, self.data_options, self.data_options, self.data_options, self.data_options, \
+                Chart.LINE_TYPES, Chart.POLAR_TYPES
 
         # Render charts
         @app.callback(
@@ -196,19 +206,26 @@ class ProgramGUI(Program):
             [
                 Input(Component.interval_once, 'n_intervals'),
                 Input(Component.interval_slow, 'n_intervals'),
-                Input(Component.btn_add_chart, 'n_clicks')
+                Input(Component.btn_add_chart_xyz, 'n_clicks'),
+                Input(Component.btn_add_chart_polar, 'n_clicks'),
             ],
             [
                 State(Component.dropdown_plot_x, 'value'),
                 State(Component.dropdown_plot_y, 'value'),
-                State(Component.dropdown_plot_z, 'value')
+                State(Component.dropdown_plot_z, 'value'),
+                State(Component.dropdown_plot_r, 'value'),
+                State(Component.dropdown_plot_theta, 'value'),
+                State(Component.dropdown_plot_xyz_type, 'value'),
+                State(Component.dropdown_plot_rt_type, 'value'),
             ]
         )
-        def add_chart(_intervals_1, _intervals_2, _clicks, x_val, y_vals, z_val):
+        def render_chart(_intervals_1, _intervals_2, _clicks_xyz, _clicks_polar,
+                         x_val, y_vals, z_val, r_val, theta_val, line_type, polar_type):
             event = ctx.triggered_id
 
             event_first_load = (event == Component.interval_once.id and self.first_load)
-            event_click_add = (event == Component.btn_add_chart.id and x_val and y_vals)
+            event_click_xyz = (event == Component.btn_add_chart_xyz.id and x_val and y_vals and line_type)
+            event_click_polar = (event == Component.btn_add_chart_polar.id and r_val and theta_val and polar_type)
             event_polling = (event == Component.interval_slow.id and not self.first_load)
 
             # First Load
@@ -216,36 +233,102 @@ class ProgramGUI(Program):
                 self.first_load = False
                 for device_id, device_plot_list in self.settings['plot'].items():
                     for plot_item in device_plot_list:
-                        __new_chart = Component.make_plot_area(
-                            self.data.df.tail(self.trim_length), plot_item['x'], plot_item['y']
-                        )
-                        Component.plot_col1.children.append(__new_chart)
-                        self.all_charts.append({
-                            'x': plot_item['x'],
-                            'y': plot_item['y'],
-                            'z': plot_item['z'] if 'z' in plot_item else None,
-                        })
+                        plot_type = plot_item['type']
+                        if plot_type == Chart.PLOT_XYZ:
+                            __z_key = plot_item['z'] if 'z' in plot_item else None
+                            __new_chart = Component.make_plot_area(
+                                data=self.data.df.tail(self.trim_length),
+                                x_key=plot_item['x'],
+                                y_keys=plot_item['y'],
+                                z_key=__z_key,
+                                line_style=plot_item['style'],
+                                plot_type=plot_type
+                            )
+                            self.all_charts.append({
+                                'x': plot_item['x'],
+                                'y': plot_item['y'],
+                                'z': __z_key,
+                                'r': None,
+                                'theta': None,
+                                'style': plot_item['style'],
+                                'type': plot_item['type']
+                            })
+                            self.all_plots.append(__new_chart)
+                        elif plot_type == Chart.PLOT_POLAR:
+                            __new_chart = Component.make_plot_area(
+                                data=self.data.df.tail(self.trim_length),
+                                r_key=plot_item['r'],
+                                theta_key=plot_item['theta'],
+                                line_style=plot_item['style'],
+                                plot_type=plot_type
+                            )
+                            self.all_charts.append({
+                                'x': None,
+                                'y': None,
+                                'z': None,
+                                'r': plot_item['r'],
+                                'theta': plot_item['theta'],
+                                'style': plot_item['style'],
+                                'type': plot_item['type']
+                            })
+                            self.all_plots.append(__new_chart)
 
-            # When Click Add Chart
-            elif event_click_add:
-                __new_chart = Component.make_plot_area(self.data.df.tail(self.trim_length), x_val, y_vals, z_val)
-                Component.plot_col1.children.append(__new_chart)
+            # When Click Add XYZ Chart
+            elif event_click_xyz:
+                __new_chart = Component.make_plot_area(
+                    data=self.data.df.tail(self.trim_length),
+                    x_key=x_val,
+                    y_keys=y_vals,
+                    z_key=z_val,
+                    line_style=line_type,
+                    plot_type=Chart.PLOT_XYZ
+                )
                 self.all_charts.append({
                     'x': x_val,
                     'y': y_vals,
                     'z': z_val,
+                    'r': None,
+                    'theta': None,
+                    'style': line_type,
+                    'type': Chart.PLOT_XYZ
                 })
+                self.all_plots.append(__new_chart)
+
+            # When Click Add Polar Chart
+            elif event_click_polar:
+                self.all_charts.append({
+                    'x': None,
+                    'y': None,
+                    'z': None,
+                    'r': r_val,
+                    'theta': theta_val,
+                    'style': polar_type,
+                    'type': Chart.PLOT_POLAR
+                })
+                __new_chart = Component.make_plot_area(
+                    data=self.data.df.tail(self.trim_length),
+                    r_key=r_val,
+                    theta_key=theta_val,
+                    line_style=polar_type,
+                    plot_type=Chart.PLOT_POLAR
+                )
+                self.all_plots.append(__new_chart)
 
             # Data Polling/Updating
             elif event_polling:
-                for i, (__chart, __child) in enumerate(zip(self.all_charts, Component.plot_col1.children)):
-                    Component.plot_col1.children[i] = Component.make_plot_area(
-                        self.data.df.tail(self.trim_length), __chart['x'], __chart['y'], __chart['z']
+                for i, __chart in enumerate(self.all_charts):
+                    self.all_plots[i] = Component.make_plot_area(
+                        data=self.data.df.tail(self.trim_length),
+                        x_key=__chart['x'],
+                        y_keys=__chart['y'],
+                        z_key=__chart['z'],
+                        r_key=__chart['r'],
+                        theta_key=__chart['theta'],
+                        line_style=__chart['style'],
+                        plot_type=__chart['type']
                     )
 
-            layout = Content.make_plot_layout_2d(Component.plot_col1.children,
-                                                 Component.plot_col2.children,
-                                                 Component.plot_col3.children)
+            layout = Content.de_flatten(self.all_plots)
             return layout
 
         @app.callback(
@@ -287,10 +370,12 @@ class ProgramGUI(Program):
     def __backend_mock(self):
         i = 0
         while self.backend_status:
-            self.data.push([
+            dat = [
                 0.5 * i ** 2 + 0.8 * j ** 2 if j > 1 else (0 if j == 0 else i)
                 for j in range(len(self.data_format['0']))
-            ])
+            ]
+            dat[2] = dat[2] % 360
+            self.data.push(dat)
             i += 1
             time.sleep(1.000)
 

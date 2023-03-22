@@ -9,17 +9,29 @@
     "plot": {
         "0": [
             {
+                "type": "xyz",
+                "style": "line",
                 "x": "packet_id",
                 "y": ["field1"]
             },
             {
+                "type": "xyz",
+                "style": "scatter",
                 "x": "packet_id",
                 "y": ["field2", "field8"]
             },
             {
+                "type": "xyz",
+                "style": "scatter",
                 "x": "field1",
                 "y": ["field2"],
                 "z": "field3"
+            },
+            {
+                "type": "polar",
+                "style": "scatter",
+                "r": "field2",
+                "theta": "field1"
             }
         ]
     },
