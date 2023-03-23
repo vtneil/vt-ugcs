@@ -6,36 +6,36 @@
     "lat_key": "lat",
     "lon_key": "lon",
     "alt_key": "alt",
+    "data_points": 32,
     "plot": {
         "0": [
             {
-                "type": "xyz",
+                "plot_type": "xyz",
                 "style": "line",
                 "x": "packet_id",
                 "y": ["field1"]
             },
             {
-                "type": "xyz",
+                "plot_type": "xyz",
                 "style": "scatter",
                 "x": "packet_id",
                 "y": ["field2", "field8"]
             },
             {
-                "type": "xyz",
+                "plot_type": "xyz",
                 "style": "scatter",
                 "x": "field1",
                 "y": ["field2"],
                 "z": "field3"
             },
             {
-                "type": "polar",
+                "plot_type": "polar",
                 "style": "scatter",
                 "r": "field2",
                 "theta": "field1"
             }
         ]
     },
-    "plot_limit": 10,
     "state_key": "state",
     "state_name": {
         "1": "PRELAUNCH",

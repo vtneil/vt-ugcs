@@ -4,9 +4,11 @@ import threading
 import time
 from deps import *
 from deps.gui import *
+from deps.gui import Chart
 
 APP_NAME = __name__
 USE_DEBUG = False
+USE_MOCK = False
 ALL_BAUD_OPT = [{'label': k, 'value': k} for k in ALL_BAUD_STR]
 
 
@@ -14,7 +16,8 @@ class ProgramGUI(Program):
     app = Dash(
         APP_NAME,
         assets_folder='deps/gui/assets',
-        meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
+        meta_tags=[{'name': 'viewport',
+                    'content': 'width=device-width, initial-scale=1'}],
         prevent_initial_callbacks=True,
         suppress_callback_exceptions=True,
         title=APP_TITLE
@@ -34,23 +37,39 @@ class ProgramGUI(Program):
                 Component.interval_once
             ], fluid=True),
             html.Div([], id='hidden-div', style={'display': 'none'}),
-            html.P('', id='data-counter', style={'display': 'none'})
+            html.P('', id='data-counter', style={'display': 'none'}),
+            html.Footer([html.P(FOOTER_TEXT, id='footer')]),
         ], className='m-5')
 
         # Backend: General Components
         self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'))
-        self.data_format = PreferencesTree.from_file(os.path.abspath('data_format.json'))
+        self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.json'))
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
         self.key_lat = self.settings['lat_key']
         self.key_lon = self.settings['lon_key']
         self.key_alt = self.settings['alt_key']
-        self.to_plot = self.settings['plot']  # self.to_plot[device_id][idx]['x' or 'y']
-        self.trim_length = self.settings['plot_limit']
+        self.to_plot: dict = self.settings['plot']
+        self.trim_length = self.settings['data_points']
         self.all_charts = []
         self.all_plots = []
-        self.data_options = [{'label': k, 'value': k} for k in self.data_format['0']]
+
+        # Generating information, keys for referencing
+        self.data_format_mod = ['d{}_{}'.format(k, e) for k, v in self.data_format_dict.tree.items() for e in v]
+        self.data_options = [{'label': k, 'value': k} for k in self.data_format_mod]
+        for dev_id, plot_list in self.to_plot.items():
+            for plot_item in plot_list:
+                if 'x' in plot_item:
+                    plot_item['x'] = 'd{}_{}'.format(dev_id, plot_item['x'])
+                if 'y' in plot_item:
+                    plot_item['y'] = ['d{}_{}'.format(dev_id, e) for e in plot_item['y']]
+                if 'z' in plot_item:
+                    plot_item['z'] = 'd{}_{}'.format(dev_id, plot_item['z'])
+                if 'r' in plot_item:
+                    plot_item['r'] = 'd{}_{}'.format(dev_id, plot_item['r'])
+                if 'theta' in plot_item:
+                    plot_item['theta'] = 'd{}_{}'.format(dev_id, plot_item['theta'])
 
         # Backend: Serial Components
         self.serial_port = SerialPort()
@@ -60,21 +79,23 @@ class ProgramGUI(Program):
         self.queue_serial = Queue()
 
         # Backend: Device 0 Data Parser and File Writer Components
-        self.parser = StringParser(self.data_format['0'])
+        self.parser = StringParser(self.data_format_mod)
         self.writer = FileWriter(__file__, self.file_name, self.extension)
         self.queue_csv = Queue()
         self.queue_coord = Queue()
 
-        # More Threads
+        # Serial Device 0 Thread
         self.serial_thread = ThreadSerial(
             self.serial_reader, self.parser, self.queue_serial
         )
+
+        # File Writer Thread
         self.writer_thread = ThreadFileWriter(
             self.writer, self.queue_csv, self.queue_coord
         )
 
         # Program DataFrame
-        self.data = Data(self.data_format['0'])
+        self.data = Data(self.data_format_mod)
         self.data_no = 0
         self.first_load = True
 
@@ -99,12 +120,17 @@ class ProgramGUI(Program):
             Input(Component.interval_fast, 'n_intervals')
         )
         def render_table(_intervals):
-            data = pd.DataFrame({
-                'key': self.data_format['0'],
-                'value': self.data.back().to_list() if self.data.available() else [None] * len(self.data_format['0'])
+            latest_data = pd.DataFrame({
+                'key': self.data_format_mod,
+                'value': self.data.back().to_list() if self.data.available() else [None] * len(self.data_format_mod)
             })
+
+            # BEGIN USER ADD OPTIONAL DATA SECTION
+            add_to_df(latest_data, 'azimuth', 'test_text')
+            # END USER ADD OPTIONAL DATA SECTION
+
             return dbc.Table.from_dataframe(
-                data,
+                latest_data,
                 bordered=True, responsive=True, hover=True, striped=True
             )
 
@@ -231,9 +257,9 @@ class ProgramGUI(Program):
             # First Load
             if event_first_load:
                 self.first_load = False
-                for device_id, device_plot_list in self.settings['plot'].items():
+                for device_id, device_plot_list in self.to_plot.items():
                     for plot_item in device_plot_list:
-                        plot_type = plot_item['type']
+                        plot_type = plot_item['plot_type']
                         if plot_type == Chart.PLOT_XYZ:
                             __z_key = plot_item['z'] if 'z' in plot_item else None
                             __new_chart = Component.make_plot_area(
@@ -244,15 +270,13 @@ class ProgramGUI(Program):
                                 line_style=plot_item['style'],
                                 plot_type=plot_type
                             )
-                            self.all_charts.append({
-                                'x': plot_item['x'],
-                                'y': plot_item['y'],
-                                'z': __z_key,
-                                'r': None,
-                                'theta': None,
-                                'style': plot_item['style'],
-                                'type': plot_item['type']
-                            })
+                            self.all_charts.append(Chart.dict_info(
+                                x=plot_item['x'],
+                                y=plot_item['y'],
+                                z=__z_key,
+                                style=plot_item['style'],
+                                plot_type=plot_item['plot_type']
+                            ))
                             self.all_plots.append(__new_chart)
                         elif plot_type == Chart.PLOT_POLAR:
                             __new_chart = Component.make_plot_area(
@@ -262,15 +286,19 @@ class ProgramGUI(Program):
                                 line_style=plot_item['style'],
                                 plot_type=plot_type
                             )
-                            self.all_charts.append({
-                                'x': None,
-                                'y': None,
-                                'z': None,
-                                'r': plot_item['r'],
-                                'theta': plot_item['theta'],
-                                'style': plot_item['style'],
-                                'type': plot_item['type']
-                            })
+                            self.all_charts.append(Chart.dict_info(
+                                r=plot_item['r'],
+                                theta=plot_item['theta'],
+                                style=plot_item['style'],
+                                plot_type=plot_item['plot_type']
+                            ))
+                            self.all_plots.append(__new_chart)
+                        elif plot_type == Chart.PLOT_MESH:
+                            __new_chart = Chart.make_mesh_render()
+                            self.all_charts.append(Chart.dict_info(
+                                model='',
+                                plot_type=plot_item['plot_type']
+                            ))
                             self.all_plots.append(__new_chart)
 
             # When Click Add XYZ Chart
@@ -283,28 +311,23 @@ class ProgramGUI(Program):
                     line_style=line_type,
                     plot_type=Chart.PLOT_XYZ
                 )
-                self.all_charts.append({
-                    'x': x_val,
-                    'y': y_vals,
-                    'z': z_val,
-                    'r': None,
-                    'theta': None,
-                    'style': line_type,
-                    'type': Chart.PLOT_XYZ
-                })
+                self.all_charts.append(Chart.dict_info(
+                    x=x_val,
+                    y=y_vals,
+                    z=z_val,
+                    style=line_type,
+                    plot_type=Chart.PLOT_XYZ
+                ))
                 self.all_plots.append(__new_chart)
 
             # When Click Add Polar Chart
             elif event_click_polar:
-                self.all_charts.append({
-                    'x': None,
-                    'y': None,
-                    'z': None,
-                    'r': r_val,
-                    'theta': theta_val,
-                    'style': polar_type,
-                    'type': Chart.PLOT_POLAR
-                })
+                self.all_charts.append(Chart.dict_info(
+                    r=r_val,
+                    theta=theta_val,
+                    style=polar_type,
+                    plot_type=Chart.PLOT_POLAR
+                ))
                 __new_chart = Component.make_plot_area(
                     data=self.data.df.tail(self.trim_length),
                     r_key=r_val,
@@ -317,18 +340,22 @@ class ProgramGUI(Program):
             # Data Polling/Updating
             elif event_polling:
                 for i, __chart in enumerate(self.all_charts):
-                    self.all_plots[i] = Component.make_plot_area(
-                        data=self.data.df.tail(self.trim_length),
-                        x_key=__chart['x'],
-                        y_keys=__chart['y'],
-                        z_key=__chart['z'],
-                        r_key=__chart['r'],
-                        theta_key=__chart['theta'],
-                        line_style=__chart['style'],
-                        plot_type=__chart['type']
-                    )
+                    if __chart['plot_type'] in [Chart.PLOT_XYZ, Chart.PLOT_POLAR]:
+                        self.all_plots[i] = Component.make_plot_area(
+                            data=self.data.df.tail(self.trim_length),
+                            x_key=__chart['x'],
+                            y_keys=__chart['y'],
+                            z_key=__chart['z'],
+                            r_key=__chart['r'],
+                            theta_key=__chart['theta'],
+                            line_style=__chart['style'],
+                            plot_type=__chart['plot_type']
+                        )
+                    elif __chart['plot_type'] == Chart.PLOT_POLAR:
+                        print('render')
+                        self.all_plots[i] = Chart.make_mesh_render()
 
-            layout = Content.de_flatten(self.all_plots)
+            layout = Content.unflatten(self.all_plots)
             return layout
 
         @app.callback(
@@ -372,15 +399,17 @@ class ProgramGUI(Program):
         while self.backend_status:
             dat = [
                 0.5 * i ** 2 + 0.8 * j ** 2 if j > 1 else (0 if j == 0 else i)
-                for j in range(len(self.data_format['0']))
+                for j in range(len(self.data_format_mod))
             ]
             dat[2] = dat[2] % 360
             self.data.push(dat)
             i += 1
-            time.sleep(1.000)
+            time.sleep(0.100)
 
     def __backend(self):
-        self.__backend_mock()
+        # Uncomment to use mock backend loop for testing
+        if USE_MOCK:
+            self.__backend_mock()
 
         while self.backend_status:
             if self.queue_serial.available():

@@ -23,6 +23,9 @@ class PreferencesTreeBase:
     def tree(self) -> dict:
         return self.__pref
 
+    def to_dict(self):
+        return self.tree
+
     def __getitem__(self, item: str):
         return self.__pref[item]
 

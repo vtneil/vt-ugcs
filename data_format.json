@@ -10,5 +10,12 @@
         "field6",
         "field7",
         "field8"
+    ],
+    "1": [
+        "device_id",
+        "packet_id",
+        "field1",
+        "field2",
+        "field3"
     ]
 }

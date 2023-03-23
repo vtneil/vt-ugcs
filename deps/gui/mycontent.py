@@ -1,91 +1,10 @@
 import pandas
 
 from .__includes import *
+from .mychart import Chart
 
 INTERVAL_SLOW = 500
 INTERVAL_FAST = 200
-
-
-class Chart:
-    PLOT_XYZ = 'xyz'
-    PLOT_POLAR = 'polar'
-
-    STYLE_LINE = 'line'
-    STYLE_SCATTER = 'scatter'
-    STYLE_BAR = 'bar'
-
-    LINE_TYPES = ['line', 'scatter']
-    POLAR_TYPES = ['bar', 'scatter']
-    MARGIN = dict(l=20, r=20, t=100, b=20)
-
-    @staticmethod
-    def make_chart_title(y: str, x: str, z: str = None):
-        if z is None:
-            return 'Y: [{}] - X: {}'.format(y, x)
-        return '({},{},{})'.format(x, y, z)
-
-    @staticmethod
-    def make_line_chart_2d(data: pandas.DataFrame, x_key: str, y_keys: list[str]):
-        fig = px.line(
-            data, x=x_key, y=y_keys, title=Chart.make_chart_title(','.join(y_keys), x_key),
-        )
-        fig.update_layout(margin=Chart.MARGIN)
-        return Chart.__make_dcc(fig)
-
-    @staticmethod
-    def make_line_chart_3d(data: pandas.DataFrame, x_key: str, y_key: str, z_key: str):
-        camera = dict(
-            eye=dict(x=1.5, y=2, z=0.1)
-        )
-        fig = px.line_3d(
-            data, x=x_key, y=y_key, z=z_key, title='3D: ' + Chart.make_chart_title(y_key, x_key, z_key)
-        )
-        fig.update_layout(margin=Chart.MARGIN, scene_camera=camera)
-        return Chart.__make_dcc(fig)
-
-    @staticmethod
-    def make_scatter_chart_2d(data: pandas.DataFrame, x_key: str, y_keys: list[str]):
-        fig = px.scatter(
-            data, x=x_key, y=y_keys, title=Chart.make_chart_title(','.join(y_keys), x_key),
-        )
-        fig.update_layout(margin=Chart.MARGIN)
-        return Chart.__make_dcc(fig)
-
-    @staticmethod
-    def make_scatter_chart_3d(data: pandas.DataFrame, x_key: str, y_key: str, z_key: str):
-        camera = dict(
-            eye=dict(x=1.5, y=2, z=0.1)
-        )
-        fig = px.scatter_3d(
-            data, x=x_key, y=y_key, z=z_key, title='3D: {}'.format(Chart.make_chart_title(y_key, x_key, z_key))
-        )
-        fig.update_layout(margin=Chart.MARGIN, scene_camera=camera)
-        return Chart.__make_dcc(fig)
-
-    @staticmethod
-    def make_bar_polar_chart(data: pandas.DataFrame, r: str | list[str], theta: str):
-        fig = px.bar_polar(
-            data, r, theta, title='Polar: r: {} - theta: {}'.format(r, theta),
-        )
-        fig.update_layout(margin=Chart.MARGIN)
-        return Chart.__make_dcc(fig)
-
-    @staticmethod
-    def make_scatter_polar_chart(data: pandas.DataFrame, r: str | list[str], theta: str):
-        fig = px.scatter_polar(
-            data, r, theta, title='Polar: r: {} - theta: {}'.format(r, theta),
-        )
-        fig.update_layout(margin=Chart.MARGIN)
-        return Chart.__make_dcc(fig)
-
-    @staticmethod
-    def __make_dcc(fig):
-        return dcc.Graph(
-            figure=fig,
-            config={
-                'displayModeBar': False
-            }
-        )
 
 
 class Component:
@@ -225,12 +144,12 @@ class Component:
     ])
 
     sidebar = html.Div([
-        html.H3('Data View'),
-        sidebar_ctrl,
-        html.Hr(),
-
         html.H3('Tabular View'),
         sidebar_dataframe,
+        html.Hr(),
+
+        html.H3('Data View'),
+        sidebar_ctrl,
         html.Hr(),
 
         html.H3('Serial Connection'),
@@ -253,25 +172,25 @@ class Component:
             x_key: str, y_keys: list[str] | str, z_key: str,
             r_key: str, theta_key: str,
             line_style: str, plot_type: str):
-        if plot_type == 'xyz':
+        if plot_type == Chart.PLOT_XYZ:
             if z_key is not None:
                 if isinstance(y_keys, str):
                     # 3D line chart with one Y.
-                    if line_style == 'scatter':
+                    if line_style == Chart.STYLE_SCATTER:
                         return Chart.make_scatter_chart_3d(data, x_key, y_keys, z_key)
                     return Chart.make_line_chart_3d(data, x_key, y_keys, z_key)
                 elif isinstance(y_keys, list):
                     # 3D line chart with many Y inputs -> Choose only first one.
-                    if line_style == 'scatter':
+                    if line_style == Chart.STYLE_SCATTER:
                         return Chart.make_scatter_chart_3d(data, x_key, y_keys[0], z_key)
                     return Chart.make_line_chart_3d(data, x_key, y_keys[0], z_key)
 
-            if line_style == 'scatter':
+            if line_style == Chart.STYLE_SCATTER:
                 return Chart.make_scatter_chart_2d(data, x_key, y_keys)
             # Default chart type: 2D line chart
             return Chart.make_line_chart_2d(data, x_key, y_keys)
-        elif plot_type == 'polar':
-            if line_style == 'bar':
+        elif plot_type == Chart.PLOT_POLAR:
+            if line_style == Chart.STYLE_BAR:
                 return Chart.make_bar_polar_chart(data, r_key, theta_key)
             return Chart.make_scatter_polar_chart(data, r_key, theta_key)
 
@@ -280,7 +199,7 @@ class Component:
             data: pandas.DataFrame,
             x_key: str = None, y_keys: list[str] | str = None, z_key: str = None,
             r_key: str = None, theta_key: str = None,
-            line_style: str = 'line', plot_type: str = 'xyz'):
+            line_style: str = Chart.STYLE_LINE, plot_type: str = Chart.PLOT_XYZ):
         __graph = Component.make_new_chart(data, x_key, y_keys, z_key, r_key, theta_key, line_style, plot_type)
         return html.Div([
             __graph
@@ -326,7 +245,7 @@ class Content:
     ], fluid=True)], className='mb-5')
 
     @staticmethod
-    def de_flatten(flats: list, cols: int = 3):
+    def unflatten(flats: list, cols: int = 3):
         layout = [[] for _ in range(cols)]
         for i, e in enumerate(flats):
             layout[i % cols].append(e)
