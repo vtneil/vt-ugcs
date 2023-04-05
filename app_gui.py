@@ -47,29 +47,32 @@ class ProgramGUI(Program):
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
-        self.key_lat = self.settings['lat_key']
-        self.key_lon = self.settings['lon_key']
-        self.key_alt = self.settings['alt_key']
+        self.key_lat = dev_field('0', self.settings['lat_key'])
+        self.key_lon = dev_field('0', self.settings['lon_key'])
+        self.key_alt = dev_field('0', self.settings['alt_key'])
         self.to_plot: dict = self.settings['plot']
         self.trim_length = self.settings['data_points']
         self.all_charts = []
         self.all_plots = []
 
         # Generating information, keys for referencing
-        self.data_format_mod = ['d{}_{}'.format(k, e) for k, v in self.data_format_dict.tree.items() for e in v]
+        self.data_format_mod = [dev_field(k, e) for k, v in self.data_format_dict.tree.items() for e in v]
         self.data_options = [{'label': k, 'value': k} for k in self.data_format_mod]
         for dev_id, plot_list in self.to_plot.items():
             for plot_item in plot_list:
                 if 'x' in plot_item:
-                    plot_item['x'] = 'd{}_{}'.format(dev_id, plot_item['x'])
+                    plot_item['x'] = dev_field(dev_id, plot_item['x'])
                 if 'y' in plot_item:
-                    plot_item['y'] = ['d{}_{}'.format(dev_id, e) for e in plot_item['y']]
+                    if isinstance(plot_item['y'], list):
+                        plot_item['y'] = [dev_field(dev_id, e) for e in plot_item['y']]
+                    elif isinstance(plot_item['y'], str):
+                        plot_item['y'] = dev_field(dev_id, plot_item['y'])
                 if 'z' in plot_item:
-                    plot_item['z'] = 'd{}_{}'.format(dev_id, plot_item['z'])
+                    plot_item['z'] = dev_field(dev_id, plot_item['z'])
                 if 'r' in plot_item:
-                    plot_item['r'] = 'd{}_{}'.format(dev_id, plot_item['r'])
+                    plot_item['r'] = dev_field(dev_id, plot_item['r'])
                 if 'theta' in plot_item:
-                    plot_item['theta'] = 'd{}_{}'.format(dev_id, plot_item['theta'])
+                    plot_item['theta'] = dev_field(dev_id, plot_item['theta'])
 
         # Backend: Serial Components
         self.serial_port = SerialPort()
@@ -351,8 +354,7 @@ class ProgramGUI(Program):
                             line_style=__chart['style'],
                             plot_type=__chart['plot_type']
                         )
-                    elif __chart['plot_type'] == Chart.PLOT_POLAR:
-                        print('render')
+                    elif __chart['plot_type'] == Chart.PLOT_MESH:
                         self.all_plots[i] = Chart.make_mesh_render()
 
             layout = Content.unflatten(self.all_plots)
@@ -415,8 +417,8 @@ class ProgramGUI(Program):
             if self.queue_serial.available():
                 dat_dict: dict = self.queue_serial.pop()
                 dat = list(dat_dict.values())
-
                 self.data.push(dat)
+
                 self.queue_coord.push(
                     GeoCoordinate(dat_dict[self.key_lat], dat_dict[self.key_lon], dat_dict[self.key_alt])
                 )

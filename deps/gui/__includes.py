@@ -29,3 +29,7 @@ def h3(text: str):
 
 def add_to_df(df: pd.DataFrame, key: str | None, value: str | int | float | None):
     df.loc[len(df)] = [key, value]
+
+
+def dev_field(device_id: int | str, field_name: str):
+    return 'd{}_{}'.format(device_id, field_name)

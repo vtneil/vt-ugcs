@@ -3,36 +3,35 @@
     "delimiter": ",",
     "file_name": "test",
     "file_extension": "csv",
-    "lat_key": "lat",
-    "lon_key": "lon",
-    "alt_key": "alt",
+    "lat_key": "latitude",
+    "lon_key": "longitude",
+    "alt_key": "altitude",
     "data_points": 32,
     "plot": {
         "0": [
             {
                 "plot_type": "xyz",
                 "style": "line",
-                "x": "packet_id",
-                "y": ["field1"]
+                "x": "counter",
+                "y": [
+                    "altitude"
+                ]
+            },
+            {
+                "plot_type": "xyz",
+                "style": "line",
+                "x": "counter",
+                "y": [
+                    "humidity",
+                    "temperature"
+                ]
             },
             {
                 "plot_type": "xyz",
                 "style": "scatter",
-                "x": "packet_id",
-                "y": ["field2", "field8"]
-            },
-            {
-                "plot_type": "xyz",
-                "style": "scatter",
-                "x": "field1",
-                "y": ["field2"],
-                "z": "field3"
-            },
-            {
-                "plot_type": "polar",
-                "style": "scatter",
-                "r": "field2",
-                "theta": "field1"
+                "x": "latitude",
+                "y": "longitude",
+                "z": "altitude"
             }
         ]
     },

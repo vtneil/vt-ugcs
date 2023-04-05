@@ -1,21 +1,12 @@
 {
     "0": [
         "device_id",
-        "packet_id",
-        "field1",
-        "field2",
-        "field3",
-        "field4",
-        "field5",
-        "field6",
-        "field7",
-        "field8"
-    ],
-    "1": [
-        "device_id",
-        "packet_id",
-        "field1",
-        "field2",
-        "field3"
+        "counter",
+        "latitude",
+        "longitude",
+        "altitude",
+        "temperature",
+        "humidity",
+        "pressure"
     ]
 }

@@ -7,7 +7,7 @@ from .mygis import GeoCoordinate
 
 class _GoogleEarthKMLText:
     earth_live_pre = ('<?xml version="1.0" encoding="UTF-8"?>\n'
-                      '<kml xmlns="http://www.opengis.net/kml/2.2"'
+                      '<kml xmlns="http://www.opengis.net/kml/2.2" '
                       'xmlns:gx="http://www.google.com/kml/ext/2.2">\n'
                       '<NetworkLink>\n'
                       '<Link>\n<href>')
