@@ -1,7 +1,5 @@
 # Ground Station Software
 
-Download at: https://github.com/vtneil/vnet-ugcs/releases/tag/alpha
-
 ## Instructions
 
 1. Install Python 3.11 or upper to your machine
