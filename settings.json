@@ -1,12 +1,12 @@
 {
-    "header": "SPARK2",
+    "header": "BALLOON",
     "delimiter": ",",
-    "file_name": "test",
+    "file_name": "team_xx",
     "file_extension": "csv",
     "lat_key": "latitude",
     "lon_key": "longitude",
     "alt_key": "altitude",
-    "data_points": 32,
+    "data_points": 120,
     "plot": {
         "0": [
             {

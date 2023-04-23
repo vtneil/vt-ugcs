@@ -2,11 +2,23 @@
     "0": [
         "device_id",
         "counter",
+        "time_now",
+        "free_memory",
         "latitude",
         "longitude",
         "altitude",
-        "temperature",
-        "humidity",
-        "pressure"
+        "latitude_sec",
+        "longitude_sec",
+        "altitude_sec",
+        "altitude_pht",
+        "temperature_pht",
+        "humidity_pht",
+        "pressure_pht",
+        "altitude_pht_ext",
+        "temperature_pht_ext",
+        "humidity_pht_ext",
+        "pressure_pht_ext",
+        "temperature_probe",
+        "battery_volt"
     ]
 }
