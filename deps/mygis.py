@@ -38,7 +38,9 @@ class GeoCoordinate:
     def __repr__(self):
         self.__str__()
 
-    def valid(self):
+    def valid(self) -> bool:
+        if self.lat is None or self.lon is None:
+            return False
         return 1 <= math.fabs(self.lat) <= 90 and 1 <= math.fabs(self.lon) <= 180
 
 

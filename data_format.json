@@ -2,7 +2,7 @@
     "0": [
         "device_id",
         "counter",
-        "time_now",
+        "time_diff",
         "free_memory",
         "latitude",
         "longitude",
@@ -20,5 +20,11 @@
         "pressure_pht_ext",
         "temperature_probe",
         "battery_volt"
+    ],
+    "1": [
+        "counter",
+        "pressure",
+        "humidity",
+        "temperature"
     ]
 }

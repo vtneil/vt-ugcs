@@ -47,17 +47,35 @@ class ProgramGUI(Program):
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
-        self.key_lat = dev_field('0', self.settings['lat_key'])
-        self.key_lon = dev_field('0', self.settings['lon_key'])
-        self.key_alt = dev_field('0', self.settings['alt_key'])
+
+        self.kml_keys = {
+            dev_id: {
+                'lat': self.settings['kml_keys'][dev_id]['lat'],
+                'lon': self.settings['kml_keys'][dev_id]['lon'],
+                'alt': self.settings['kml_keys'][dev_id]['alt']
+            } for dev_id in self.settings['kml_keys']
+        }
+
         self.to_plot: dict = self.settings['plot']
         self.trim_length = self.settings['data_points']
         self.all_charts = []
         self.all_plots = []
 
         # Generating information, keys for referencing
-        self.data_format_mod = [dev_field(k, e) for k, v in self.data_format_dict.tree.items() for e in v]
+        self.id_to_index = {
+            dev_id: i for i, dev_id in enumerate(self.data_format_dict.tree)
+        }
+
+        self.index_id_list = [dev_id for dev_id in self.data_format_dict.tree]
+        self.index_to_id = lambda index: self.index_id_list[index] if index < len(self.index_id_list) else -1
+
+        self.data_format_mod = [
+            dev_field(dev_id, e) for dev_id, data_list in self.data_format_dict.tree.items() for e in data_list
+        ]
+
         self.data_options = [{'label': k, 'value': k} for k in self.data_format_mod]
+
+        # Modify keys for each item to plot, prefix them with device prefix
         for dev_id, plot_list in self.to_plot.items():
             for plot_item in plot_list:
                 if 'x' in plot_item:
@@ -75,30 +93,36 @@ class ProgramGUI(Program):
                     plot_item['theta'] = dev_field(dev_id, plot_item['theta'])
 
         # Backend: Serial Components
-        self.serial_port = SerialPort()
-        self.port_name = ''
-        self.port_baud = 115200
-        self.serial_reader = SerialReader(self.serial_port)
-        self.queue_serial = Queue()
+        self.serial_ports = [SerialPort() for _ in range(NUM_SERIAL)]
+        self.port_names = [''] * NUM_SERIAL
+        self.port_bauds = [115200] * NUM_SERIAL
+        self.serial_readers = [SerialReader(self.serial_ports[i]) for i in range(NUM_SERIAL)]
+        self.queue_serials = [Queue() for _ in range(NUM_SERIAL)]
 
         # Backend: Device 0 Data Parser and File Writer Components
-        self.parser = StringParser(self.data_format_mod)
-        self.writer = FileWriter(__file__, self.file_name, self.extension)
-        self.queue_csv = Queue()
-        self.queue_coord = Queue()
+        self.parsers = [
+            StringParser(self.data_format_dict[str(i)])
+            if str(i) in self.data_format_dict.tree else None
+            for i in range(NUM_SERIAL)
+        ]
+        self.writers = [FileWriter(__file__, self.file_name, self.extension, device_id=i) for i in range(NUM_SERIAL)]
+        self.queue_csvs = [Queue() for _ in range(NUM_SERIAL)]
+        self.queue_coords = [Queue() for _ in range(NUM_SERIAL)]
 
         # Serial Device 0 Thread
-        self.serial_thread = ThreadSerial(
-            self.serial_reader, self.parser, self.queue_serial
-        )
+        self.serial_threads = [ThreadSerial(
+            reader, parser, q_ser
+        ) for reader, parser, q_ser in zip(self.serial_readers, self.parsers, self.queue_serials)]
 
         # File Writer Thread
-        self.writer_thread = ThreadFileWriter(
-            self.writer, self.queue_csv, self.queue_coord
-        )
+        self.writer_threads = [ThreadFileWriter(
+            writer, q_csv, q_coord
+        ) for writer, q_csv, q_coord in zip(self.writers, self.queue_csvs, self.queue_coords)]
 
         # Program DataFrame
         self.data = Data(self.data_format_mod)
+        self.data_len = tuple(len(self.data_format_dict.tree[e]) for e in self.data_format_dict.tree)
+        self.data_back = [0] * len(self.data_format_mod)
         self.data_no = 0
         self.first_load = True
 
@@ -112,7 +136,7 @@ class ProgramGUI(Program):
         )
 
         # Misc Variables
-        self.serial_connection = False
+        self.serial_connections = [False] * NUM_SERIAL
 
     def __init_callbacks(self):
         app = self.app
@@ -153,58 +177,73 @@ class ProgramGUI(Program):
         # Refresh Serial port dropdown options
         @app.callback(
             [
-                Output(Component.dropdown_port, 'options'),
-                Output(Component.dropdown_baud, 'options')
+                *(Output(dropdown_port, 'options') for dropdown_port in Component.dropdown_ports),
+                *(Output(dropdown_baud, 'options') for dropdown_baud in Component.dropdown_bauds)
             ],
             Input(Component.interval_slow, 'n_intervals')
         )
         def render_serial_options(_interval):
-            self.serial_port.refresh()
-            all_ports = self.serial_port.port_pair.keys()
+            self.serial_ports[0].refresh()
+            all_ports = self.serial_ports[0].port_pair.keys()
             new_opt = [{'label': k, 'value': k} for k in all_ports]
-            return new_opt, ALL_BAUD_OPT
+            return [*([new_opt] * NUM_SERIAL), *([ALL_BAUD_OPT] * NUM_SERIAL)]
 
         # Lock serial elements on connection and disconnection
         @app.callback(
             [
-                Output(Component.btn_connect, 'className'),
-                Output(Component.btn_disconnect, 'className'),
-                Output(Component.dropdown_port, 'disabled'),
-                Output(Component.dropdown_baud, 'disabled'),
+                *(Output(btn_connect, 'className') for btn_connect in Component.btn_connects),
+                *(Output(btn_disconnect, 'className') for btn_disconnect in Component.btn_disconnects),
+                *(Output(dropdown_port, 'disabled') for dropdown_port in Component.dropdown_ports),
+                *(Output(dropdown_baud, 'disabled') for dropdown_baud in Component.dropdown_bauds),
             ],
             [
-                Input(Component.btn_connect, 'n_clicks'),
-                Input(Component.btn_disconnect, 'n_clicks'),
                 Input(Component.interval_slow, 'n_intervals'),
+                *(Input(btn_connect, 'n_clicks') for btn_connect in Component.btn_connects),
+                *(Input(btn_disconnect, 'n_clicks') for btn_disconnect in Component.btn_disconnects),
             ],
             [
-                State(Component.dropdown_port, 'value'),
-                State(Component.dropdown_baud, 'value')
+                *(State(dropdown_port, 'value') for dropdown_port in Component.dropdown_ports),
+                *(State(dropdown_baud, 'value') for dropdown_baud in Component.dropdown_bauds)
             ]
         )
-        def btn_serial_connect(_connect, _disconnect, _intervals, serial_port, serial_baud):
-            btn_clicked = ctx.triggered_id
-            if btn_clicked == Component.btn_connect.id:
-                self.port_name = serial_port or self.port_name
-                self.port_baud = self.port_baud if serial_baud is None else int(serial_baud)
-                self.__connect_serial()
-                self.__start()
-            elif btn_clicked == Component.btn_disconnect.id:
-                self.__stop()
-                self.__disconnect_serial()
+        def btn_serial_connect(*args):
+            # Unused, leave commented.
+            # btn_connects = args[1:1 + NUM_SERIAL]
+            # btn_disconnects = args[1 + NUM_SERIAL:1 + 2 * NUM_SERIAL]
 
-            if self.serial_connection:
-                return (
-                    'mx-1 btn-primary disabled',
-                    'mx-1 btn-danger',
-                    True, True
-                )
-            else:
-                return (
-                    'mx-1 btn-primary',
-                    'mx-1 btn-danger disabled',
-                    False, False
-                )
+            serial_ports = args[1 + 2 * NUM_SERIAL:1 + 3 * NUM_SERIAL]
+            serial_bauds = args[1 + 3 * NUM_SERIAL:1 + 4 * NUM_SERIAL]
+
+            btn_clicked = ctx.triggered_id
+
+            for i, (serial_port, serial_baud) in enumerate(zip(serial_ports, serial_bauds)):
+                if btn_clicked == Component.btn_connects[i].id:
+                    self.port_names[i] = serial_port or self.port_names
+                    self.port_bauds[i] = self.port_bauds if serial_baud is None else int(serial_baud)
+                    self.__connect_serial(i)
+                    self.__start(i)
+                elif btn_clicked == Component.btn_disconnects[i].id:
+                    self.__stop(i)
+                    self.__disconnect_serial(i)
+
+            ret_val1 = []
+            ret_val2 = []
+            ret_val3 = []
+            ret_val4 = []
+
+            for i in range(NUM_SERIAL):
+                if self.serial_connections[i]:
+                    ret_val1.append('mx-1 btn-primary disabled')
+                    ret_val2.append('mx-1 btn-danger')
+                    ret_val3.append(True)
+                    ret_val4.append(True)
+                else:
+                    ret_val1.append('mx-1 btn-primary')
+                    ret_val2.append('mx-1 btn-danger disabled')
+                    ret_val3.append(False)
+                    ret_val4.append(False)
+
+            return [*ret_val1, *ret_val2, *ret_val3, *ret_val4]
 
         # Refresh Data View Dropdown
         @app.callback(
@@ -369,32 +408,32 @@ class ProgramGUI(Program):
                 self.data.pop()
             return []
 
-    def __start(self):
+    def __start(self, i):
         """
         Start the backend
 
         :return:
         """
-        if not self.serial_connection:
+        if not self.serial_connections[i]:
             return
 
-        self.serial_thread.start()
-        self.writer_thread.start()
+        self.serial_threads[i].start()
+        self.writer_threads[i].start()
 
-    def __stop(self):
-        self.serial_thread.stop()
-        self.writer_thread.stop()
+    def __stop(self, i):
+        self.serial_threads[i].stop()
+        self.writer_threads[i].stop()
 
-    def __connect_serial(self):
-        self.serial_connection = self.serial_port.connect(
-            self.port_name, self.port_baud,
+    def __connect_serial(self, i):
+        self.serial_connections[i] = self.serial_ports[i].connect(
+            self.port_names[i], self.port_bauds[i],
             auto_reconnect=True
         )
-        return self.serial_connection
+        return self.serial_connections[i]
 
-    def __disconnect_serial(self):
-        self.serial_port.disconnect()
-        self.serial_connection = False
+    def __disconnect_serial(self, i):
+        self.serial_ports[i].disconnect()
+        self.serial_connections[i] = False
 
     def __backend_mock(self):
         i = 0
@@ -414,17 +453,31 @@ class ProgramGUI(Program):
             self.__backend_mock()
 
         while self.backend_status:
-            if self.queue_serial.available():
-                dat_dict: dict = self.queue_serial.pop()
-                dat = list(dat_dict.values())
-                self.data.push(dat)
+            for i in range(NUM_SERIAL):
+                if self.queue_serials[i].available():
+                    dat_dict: dict = self.queue_serials[i].pop()
+                    dat = list(dat_dict.values())
+                    if i == 0:
+                        start_idx = 0
+                    else:
+                        start_idx = self.data_len[i - 1]
+                    for j, x in enumerate(dat, start_idx):
+                        self.data_back[j] = x
+                    self.data.push(self.data_back)
 
-                self.queue_coord.push(
-                    GeoCoordinate(dat_dict[self.key_lat], dat_dict[self.key_lon], dat_dict[self.key_alt])
-                )
-                self.queue_csv.push(dat)
+                    print(f'{i}: {self.data_back}')
 
-                self.data_no += 1
+                    if str(i) in self.kml_keys:
+                        self.queue_coords[i].push(
+                            GeoCoordinate(
+                                dat_dict[self.kml_keys[str(i)]['lat']],
+                                dat_dict[self.kml_keys[str(i)]['lon']],
+                                dat_dict[self.kml_keys[str(i)]['alt']]
+                            )
+                        )
+                    self.queue_csvs[i].push(dat)
+
+                    self.data_no += 1
 
             time.sleep(0.100)
 
@@ -441,8 +494,9 @@ class ProgramGUI(Program):
         self.app.run_server(debug=USE_DEBUG)
 
     def stop(self):
-        self.__stop()
-        self.serial_port.disconnect(destructor=True)
+        for i in range(NUM_SERIAL):
+            self.__stop(i)
+            self.serial_ports[i].disconnect(destructor=True)
 
         self.backend_status = False
         self.backend_thread.join(timeout=2.000)

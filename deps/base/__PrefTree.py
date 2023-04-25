@@ -27,11 +27,10 @@ class PreferencesTreeBase:
         return self.tree
 
     def __getitem__(self, item: str):
-        return self.__pref[item]
+        return self.__pref.__getitem__(item)
 
     def __setitem__(self, key, value):
-        self.__pref[key] = value
-        return
+        self.__pref.__setitem__(key, value)
 
     def setdefault(self, key, value):
         self.__pref.setdefault(key, value)

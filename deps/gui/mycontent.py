@@ -7,164 +7,173 @@ INTERVAL_SLOW = 500
 INTERVAL_FAST = 200
 
 
-class Component:
-    dropdown_port = dcc.Dropdown(
-        [], id='dropdown-port', disabled=True, clearable=False,
-        persistence='true', persistence_type='session',
-        placeholder='Choose serial port from below'
-    )
+class BaseComponent:
+    def __init__(self):
+        self.dropdown_ports = [dcc.Dropdown(
+            [], id=f'dropdown-port-{i}', disabled=True, clearable=False,
+            persistence='true', persistence_type='session',
+            placeholder='Choose serial port from below'
+        ) for i in range(NUM_SERIAL)]
 
-    dropdown_baud = dcc.Dropdown(
-        [], id='dropdown-baud', disabled=True, clearable=False,
-        persistence='true', persistence_type='session',
-        placeholder='Choose baud rate from below'
-    )
+        self.dropdown_bauds = [dcc.Dropdown(
+            [], id=f'dropdown-baud-{i}', disabled=True, clearable=False,
+            persistence='true', persistence_type='session',
+            placeholder='Choose baud rate from below'
+        ) for i in range(NUM_SERIAL)]
 
-    btn_connect = dbc.Button('Connect', id='btn-connect',
-                             className='mx-1 btn-primary disabled')
+        self.btn_connects = [dbc.Button(
+            'Connect', id=f'btn-connect-{i}',
+            className='mx-1 btn-primary disabled'
+        ) for i in range(NUM_SERIAL)]
 
-    btn_disconnect = dbc.Button('Disconnect', id='btn-disconnect',
-                                className='mx-1 btn-danger disabled')
+        self.btn_disconnects = [dbc.Button(
+            'Disconnect', id=f'btn-disconnect-{i}',
+            className='mx-1 btn-danger disabled'
+        ) for i in range(NUM_SERIAL)]
 
-    # Interval
+        # Interval
 
-    interval_slow = dcc.Interval(
-        id='interval-slow',
-        interval=INTERVAL_SLOW,
-        n_intervals=0
-    )
+        self.interval_slow = dcc.Interval(
+            id='interval-slow',
+            interval=INTERVAL_SLOW,
+            n_intervals=0
+        )
 
-    interval_fast = dcc.Interval(
-        id='interval-fast',
-        interval=INTERVAL_FAST,
-        n_intervals=0
-    )
+        self.interval_fast = dcc.Interval(
+            id='interval-fast',
+            interval=INTERVAL_FAST,
+            n_intervals=0
+        )
 
-    interval_once = dcc.Interval(
-        id='interval-once',
-        interval=INTERVAL_FAST,
-        n_intervals=0,
-        max_intervals=1
-    )
+        self.interval_once = dcc.Interval(
+            id='interval-once',
+            interval=INTERVAL_FAST,
+            n_intervals=0,
+            max_intervals=1
+        )
 
-    # Global Components
+        # Global Components
 
-    serial_options = html.Div([
-        dbc.Label('Serial Device Port', html_for='dropdown-port'),
-        dropdown_port,
+        self.serial_options = [html.Div([
+            dbc.Label('Serial Device Port', html_for=f'dropdown-port-{i}'),
+            self.dropdown_ports[i],
 
-        html.Br(),
+            html.Br(),
 
-        dbc.Label('Baud Rate', html_for='dropdown-baud'),
-        dropdown_baud,
+            dbc.Label('Baud Rate', html_for=f'dropdown-baud-{i}'),
+            self.dropdown_bauds[i],
 
-        html.Br(),
+            html.Br(),
 
-        html.Div([
-            btn_connect,
-            btn_disconnect
-        ]),
-    ])
+            html.Div([
+                self.btn_connects[i],
+                self.btn_disconnects[i]
+            ]),
 
-    sidebar_dataframe = html.Div([])
+            html.Br(),
+            html.Hr(),
+            html.Br()
+        ]) for i in range(NUM_SERIAL)]
 
-    dropdown_plot_x = dcc.Dropdown(
-        [], id='dropdown-plot-x'
-    )
+        self.sidebar_dataframe = html.Div([])
 
-    dropdown_plot_y = dcc.Dropdown(
-        [], id='dropdown-plot-y', multi=True
-    )
+        self.dropdown_plot_x = dcc.Dropdown(
+            [], id='dropdown-plot-x'
+        )
 
-    dropdown_plot_z = dcc.Dropdown(
-        [], id='dropdown-plot-z'
-    )
+        self.dropdown_plot_y = dcc.Dropdown(
+            [], id='dropdown-plot-y', multi=True
+        )
 
-    dropdown_plot_xyz_type = dcc.Dropdown(
-        [], id='dropdown-plot-xyz-type'
-    )
+        self.dropdown_plot_z = dcc.Dropdown(
+            [], id='dropdown-plot-z'
+        )
 
-    dropdown_plot_r = dcc.Dropdown(
-        [], id='dropdown-plot-r'
-    )
+        self.dropdown_plot_xyz_type = dcc.Dropdown(
+            [], id='dropdown-plot-xyz-type'
+        )
 
-    dropdown_plot_theta = dcc.Dropdown(
-        [], id='dropdown-plot-theta'
-    )
+        self.dropdown_plot_r = dcc.Dropdown(
+            [], id='dropdown-plot-r'
+        )
 
-    dropdown_plot_rt_type = dcc.Dropdown(
-        [], id='dropdown-plot-rt-type'
-    )
+        self.dropdown_plot_theta = dcc.Dropdown(
+            [], id='dropdown-plot-theta'
+        )
 
-    btn_add_chart_xyz = dbc.Button('Add Chart to View', id='btn-add-chart-xyz',
-                                   className='mx-1 btn-primary')
+        self.dropdown_plot_rt_type = dcc.Dropdown(
+            [], id='dropdown-plot-rt-type'
+        )
 
-    btn_add_chart_polar = dbc.Button('Add Chart to View', id='btn-add-chart-polar',
-                                     className='mx-1 btn-primary')
+        self.btn_add_chart_xyz = dbc.Button('Add Chart to View', id='btn-add-chart-xyz',
+                                            className='mx-1 btn-primary')
 
-    btn_pop_chart = dbc.Button('Pop Last Data', id='btn-pop-chart',
-                               className='mx-1 btn-danger')
+        self.btn_add_chart_polar = dbc.Button('Add Chart to View', id='btn-add-chart-polar',
+                                              className='mx-1 btn-primary')
 
-    sidebar_page1 = dbc.Card(dbc.CardBody([
-        dbc.Label('X Axis', html_for='dropdown-plot-x'),
-        dropdown_plot_x,
-        html.Br(),
-        dbc.Label('Y Axis', html_for='dropdown-plot-y'),
-        dropdown_plot_y,
-        html.Br(),
-        dbc.Label('Z Axis (Optional), choose 1 Y only.', html_for='dropdown-plot-z'),
-        dropdown_plot_z,
-        html.Br(),
-        dbc.Label('Line Type', html_for='dropdown-plot-xyz-type'),
-        dropdown_plot_xyz_type,
-        html.Br(),
-        btn_add_chart_xyz,
-    ]), className='mt-3 mb-3')
+        self.btn_pop_chart = dbc.Button('Pop Last Data', id='btn-pop-chart',
+                                        className='mx-1 btn-danger')
 
-    sidebar_page2 = dbc.Card(dbc.CardBody([
-        dbc.Label('Polar r', html_for='dropdown-plot-r'),
-        dropdown_plot_r,
-        html.Br(),
-        dbc.Label('Polar theta', html_for='dropdown-plot-theta'),
-        dropdown_plot_theta,
-        html.Br(),
-        dbc.Label('Plotting Type', html_for='dropdown-plot-rt-type'),
-        dropdown_plot_rt_type,
-        html.Br(),
-        btn_add_chart_polar,
-    ]), className='mt-3 mb-3')
+        self.sidebar_page1 = dbc.Card(dbc.CardBody([
+            dbc.Label('X Axis', html_for='dropdown-plot-x'),
+            self.dropdown_plot_x,
+            html.Br(),
+            dbc.Label('Y Axis', html_for='dropdown-plot-y'),
+            self.dropdown_plot_y,
+            html.Br(),
+            dbc.Label('Z Axis (Optional), choose 1 Y only.', html_for='dropdown-plot-z'),
+            self.dropdown_plot_z,
+            html.Br(),
+            dbc.Label('Line Type', html_for='dropdown-plot-xyz-type'),
+            self.dropdown_plot_xyz_type,
+            html.Br(),
+            self.btn_add_chart_xyz,
+        ]), className='mt-3 mb-3')
 
-    sidebar_ctrl = html.Div([
-        dbc.Tabs([
-            dbc.Tab(sidebar_page1, label='XYZ Graph'),
-            dbc.Tab(sidebar_page2, label='Polar Graph'),
-            dbc.Tab(html.Div([]), label='Other', disabled=True),
-        ]),
-        btn_pop_chart
-    ])
+        self.sidebar_page2 = dbc.Card(dbc.CardBody([
+            dbc.Label('Polar r', html_for='dropdown-plot-r'),
+            self.dropdown_plot_r,
+            html.Br(),
+            dbc.Label('Polar theta', html_for='dropdown-plot-theta'),
+            self.dropdown_plot_theta,
+            html.Br(),
+            dbc.Label('Plotting Type', html_for='dropdown-plot-rt-type'),
+            self.dropdown_plot_rt_type,
+            html.Br(),
+            self.btn_add_chart_polar,
+        ]), className='mt-3 mb-3')
 
-    sidebar = html.Div([
-        html.H3('Tabular View'),
-        sidebar_dataframe,
-        html.Hr(),
+        self.sidebar_ctrl = html.Div([
+            dbc.Tabs([
+                dbc.Tab(self.sidebar_page1, label='XYZ Graph'),
+                dbc.Tab(self.sidebar_page2, label='Polar Graph'),
+                dbc.Tab(html.Div([]), label='Other', disabled=True),
+            ]),
+            self.btn_pop_chart
+        ])
 
-        html.H3('Data View'),
-        sidebar_ctrl,
-        html.Hr(),
+        self.sidebar = html.Div([
+            html.H3('Tabular View'),
+            self.sidebar_dataframe,
+            html.Hr(),
 
-        html.H3('Serial Connection'),
-        dbc.Card(dbc.CardBody([
-            serial_options
-        ]), className='mt-3 mb-3'),
-        html.Hr(),
-    ])
+            html.H3('Data View'),
+            self.sidebar_ctrl,
+            html.Hr(),
 
-    # Plot Section
+            html.H3('Serial Connection'),
+            dbc.Card(dbc.CardBody([
+                *self.serial_options
+            ]), className='mt-3 mb-3'),
+            html.Hr(),
+        ])
 
-    plot_col1 = dbc.Col([])
-    plot_col2 = dbc.Col([])
-    plot_col3 = dbc.Col([])
-    plot_area = dbc.Row([plot_col1, plot_col2, plot_col3])
+        # Plot Section
+
+        self.plot_col1 = dbc.Col([])
+        self.plot_col2 = dbc.Col([])
+        self.plot_col3 = dbc.Col([])
+        self.plot_area = dbc.Row([self.plot_col1, self.plot_col2, self.plot_col3])
 
     @staticmethod
     def make_new_chart(
@@ -206,6 +215,9 @@ class Component:
         ])
 
 
+Component = BaseComponent()
+
+
 class Content:
     content = html.Div([], id='page-content')
 
@@ -227,7 +239,7 @@ class Content:
 
         h3('Connection'),
 
-        Component.serial_options,
+        *Component.serial_options,
 
         h3('File'),
 

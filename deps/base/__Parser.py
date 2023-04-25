@@ -30,15 +30,18 @@ class ParserBase:
 
     @staticmethod
     def final_type(value) -> None | str | float | int:
-        if value is not None:
-            if value == '':
-                return None
-            try:
-                if int(float(value)) == float(value):
-                    return int(value)
-                else:
-                    return float(value)
-            except ValueError:
-                return value
-        else:
+        if value is None or value == '':
             return None
+        try:
+            if isinstance(value, int):
+                return value
+            if isinstance(value, float):
+                return value
+            if isinstance(value, str):
+                if '.' in value:
+                    return float(value)
+                else:
+                    return int(value)
+            return value
+        except ValueError:
+            return value
