@@ -56,7 +56,7 @@ class ProgramGUI(Program):
             } for dev_id in self.settings['kml_keys']
         }
 
-        self.to_plot: dict = self.settings['plot']
+        self.to_plot: list = self.settings['plot']
         self.trim_length = self.settings['data_points']
         self.all_charts = []
         self.all_plots = []
@@ -76,21 +76,29 @@ class ProgramGUI(Program):
         self.data_options = [{'label': k, 'value': k} for k in self.data_format_mod]
 
         # Modify keys for each item to plot, prefix them with device prefix
-        for dev_id, plot_list in self.to_plot.items():
-            for plot_item in plot_list:
-                if 'x' in plot_item:
-                    plot_item['x'] = dev_field(dev_id, plot_item['x'])
-                if 'y' in plot_item:
-                    if isinstance(plot_item['y'], list):
-                        plot_item['y'] = [dev_field(dev_id, e) for e in plot_item['y']]
-                    elif isinstance(plot_item['y'], str):
-                        plot_item['y'] = dev_field(dev_id, plot_item['y'])
-                if 'z' in plot_item:
-                    plot_item['z'] = dev_field(dev_id, plot_item['z'])
-                if 'r' in plot_item:
-                    plot_item['r'] = dev_field(dev_id, plot_item['r'])
-                if 'theta' in plot_item:
-                    plot_item['theta'] = dev_field(dev_id, plot_item['theta'])
+        # for dev_id, plot_list in self.to_plot.items():
+        #     for plot_item in plot_list:
+        for plot_item in self.to_plot:
+            if 'x' in plot_item:
+                for dev_id in plot_item['x']:
+                    plot_item['x'] = dev_field(dev_id, plot_item['x'][dev_id])
+            if 'y' in plot_item:
+                tmp_y = []
+                for dev_id in plot_item['y']:
+                    if isinstance(plot_item['y'][dev_id], list):
+                        tmp_y.extend(dev_field(dev_id, e) for e in plot_item['y'][dev_id])
+                    elif isinstance(plot_item['y'][dev_id], str):
+                        tmp_y.append(dev_field(dev_id, plot_item['y'][dev_id]))
+                plot_item['y'] = tmp_y
+            if 'z' in plot_item:
+                for dev_id in plot_item['z']:
+                    plot_item['z'] = dev_field(dev_id, plot_item['z'][dev_id])
+            if 'r' in plot_item:
+                for dev_id in plot_item['r']:
+                    plot_item['r'] = dev_field(dev_id, plot_item['r'][dev_id])
+            if 'theta' in plot_item:
+                for dev_id in plot_item['theta']:
+                    plot_item['theta'] = dev_field(dev_id, plot_item['theta'][dev_id])
 
         # Backend: Serial Components
         self.serial_ports = [SerialPort() for _ in range(NUM_SERIAL)]
@@ -153,7 +161,7 @@ class ProgramGUI(Program):
             })
 
             # BEGIN USER ADD OPTIONAL DATA SECTION
-            add_to_df(latest_data, 'azimuth', 'test_text')
+            latest_data = add_front_df(latest_data, 'azimuth', 'test_text')
             # END USER ADD OPTIONAL DATA SECTION
 
             return dbc.Table.from_dataframe(
@@ -218,6 +226,8 @@ class ProgramGUI(Program):
 
             for i, (serial_port, serial_baud) in enumerate(zip(serial_ports, serial_bauds)):
                 if btn_clicked == Component.btn_connects[i].id:
+                    if not serial_port:
+                        continue
                     self.port_names[i] = serial_port or self.port_names
                     self.port_bauds[i] = self.port_bauds if serial_baud is None else int(serial_baud)
                     self.__connect_serial(i)
@@ -235,6 +245,11 @@ class ProgramGUI(Program):
                 if self.serial_connections[i]:
                     ret_val1.append('mx-1 btn-primary disabled')
                     ret_val2.append('mx-1 btn-danger')
+                    ret_val3.append(True)
+                    ret_val4.append(True)
+                elif i >= len(self.data_format_dict):
+                    ret_val1.append('mx-1 btn-primary disabled')
+                    ret_val2.append('mx-1 btn-danger disabled')
                     ret_val3.append(True)
                     ret_val4.append(True)
                 else:
@@ -299,49 +314,48 @@ class ProgramGUI(Program):
             # First Load
             if event_first_load:
                 self.first_load = False
-                for device_id, device_plot_list in self.to_plot.items():
-                    for plot_item in device_plot_list:
-                        plot_type = plot_item['plot_type']
-                        if plot_type == Chart.PLOT_XYZ:
-                            __z_key = plot_item['z'] if 'z' in plot_item else None
-                            __new_chart = Component.make_plot_area(
-                                data=self.data.df.tail(self.trim_length),
-                                x_key=plot_item['x'],
-                                y_keys=plot_item['y'],
-                                z_key=__z_key,
-                                line_style=plot_item['style'],
-                                plot_type=plot_type
-                            )
-                            self.all_charts.append(Chart.dict_info(
-                                x=plot_item['x'],
-                                y=plot_item['y'],
-                                z=__z_key,
-                                style=plot_item['style'],
-                                plot_type=plot_item['plot_type']
-                            ))
-                            self.all_plots.append(__new_chart)
-                        elif plot_type == Chart.PLOT_POLAR:
-                            __new_chart = Component.make_plot_area(
-                                data=self.data.df.tail(self.trim_length),
-                                r_key=plot_item['r'],
-                                theta_key=plot_item['theta'],
-                                line_style=plot_item['style'],
-                                plot_type=plot_type
-                            )
-                            self.all_charts.append(Chart.dict_info(
-                                r=plot_item['r'],
-                                theta=plot_item['theta'],
-                                style=plot_item['style'],
-                                plot_type=plot_item['plot_type']
-                            ))
-                            self.all_plots.append(__new_chart)
-                        elif plot_type == Chart.PLOT_MESH:
-                            __new_chart = Chart.make_mesh_render()
-                            self.all_charts.append(Chart.dict_info(
-                                model='',
-                                plot_type=plot_item['plot_type']
-                            ))
-                            self.all_plots.append(__new_chart)
+                for plot_item in self.to_plot:
+                    plot_type = plot_item['plot_type']
+                    if plot_type == Chart.PLOT_XYZ:
+                        __z_key = plot_item['z'] if 'z' in plot_item else None
+                        __new_chart = Component.make_plot_area(
+                            data=self.data.df.tail(self.trim_length),
+                            x_key=plot_item['x'],
+                            y_keys=plot_item['y'],
+                            z_key=__z_key,
+                            line_style=plot_item['style'],
+                            plot_type=plot_type
+                        )
+                        self.all_charts.append(Chart.dict_info(
+                            x=plot_item['x'],
+                            y=plot_item['y'],
+                            z=__z_key,
+                            style=plot_item['style'],
+                            plot_type=plot_item['plot_type']
+                        ))
+                        self.all_plots.append(__new_chart)
+                    elif plot_type == Chart.PLOT_POLAR:
+                        __new_chart = Component.make_plot_area(
+                            data=self.data.df.tail(self.trim_length),
+                            r_key=plot_item['r'],
+                            theta_key=plot_item['theta'],
+                            line_style=plot_item['style'],
+                            plot_type=plot_type
+                        )
+                        self.all_charts.append(Chart.dict_info(
+                            r=plot_item['r'],
+                            theta=plot_item['theta'],
+                            style=plot_item['style'],
+                            plot_type=plot_item['plot_type']
+                        ))
+                        self.all_plots.append(__new_chart)
+                    elif plot_type == Chart.PLOT_MESH:
+                        __new_chart = Chart.make_mesh_render()
+                        self.all_charts.append(Chart.dict_info(
+                            model='',
+                            plot_type=plot_item['plot_type']
+                        ))
+                        self.all_plots.append(__new_chart)
 
             # When Click Add XYZ Chart
             elif event_click_xyz:

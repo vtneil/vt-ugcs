@@ -27,8 +27,14 @@ def h3(text: str):
     return html.H3(text, className='mt-5')
 
 
-def add_to_df(df: pd.DataFrame, key: str | None, value: str | int | float | None):
-    df.loc[len(df)] = [key, value]
+def add_back_df(df: pd.DataFrame, key: str | None, value: str | int | float | None):
+    new_df = pd.concat([df, pd.DataFrame([[key, value]], columns=['key', 'value'])], ignore_index=True)
+    return new_df
+
+
+def add_front_df(df: pd.DataFrame, key: str | None, value: str | int | float | None):
+    new_df = pd.concat([pd.DataFrame([[key, value]], columns=['key', 'value']), df], ignore_index=True)
+    return new_df
 
 
 def dev_field(device_id: int | str, field_name: str):

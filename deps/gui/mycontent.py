@@ -12,7 +12,7 @@ class BaseComponent:
         self.dropdown_ports = [dcc.Dropdown(
             [], id=f'dropdown-port-{i}', disabled=True, clearable=False,
             persistence='true', persistence_type='session',
-            placeholder='Choose serial port from below'
+            placeholder='Choose serial port from below',
         ) for i in range(NUM_SERIAL)]
 
         self.dropdown_bauds = [dcc.Dropdown(

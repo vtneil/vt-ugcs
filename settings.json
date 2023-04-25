@@ -8,54 +8,111 @@
             "lat": "latitude",
             "lon": "longitude",
             "alt": "altitude"
+        },
+        "1": {
+            "lat": "latitude",
+            "lon": "longitude",
+            "alt": "altitude"
         }
     },
-    "data_points": 20,
-    "plot": {
-        "0": [
-            {
-                "plot_type": "xyz",
-                "style": "line",
-                "x": "counter",
-                "y": [
+    "data_points": 120,
+    "plot": [
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": [
                     "altitude",
                     "altitude_sec",
                     "altitude_pht",
                     "altitude_pht_ext"
                 ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "1": "counter"
             },
-            {
-                "plot_type": "xyz",
-                "style": "line",
-                "x": "counter",
-                "y": [
+            "y": {
+                "1": [
+                    "altitude",
+                    "altitude_sec",
+                    "altitude_pht",
+                    "altitude_pht_ext"
+                ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": [
                     "humidity_pht",
                     "humidity_pht_ext"
                 ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "1": "counter"
             },
-            {
-                "plot_type": "xyz",
-                "style": "line",
-                "x": "counter",
-                "y": [
+            "y": {
+                "1": [
+                    "humidity_pht",
+                    "humidity_pht_ext"
+                ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": [
                     "temperature_pht",
                     "temperature_pht_ext",
                     "temperature_probe"
                 ]
             }
-        ],
-        "1": [
-            {
-                "plot_type": "xyz",
-                "style": "scatter",
-                "x": "counter",
-                "y": [
-                    "pressure",
-                    "humidity"
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "1": "counter"
+            },
+            "y": {
+                "1": [
+                    "temperature_pht",
+                    "temperature_pht_ext",
+                    "temperature_probe"
                 ]
             }
-        ]
-    },
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": "battery_volt",
+                "1": "battery_volt"
+            }
+        }
+    ],
     "state_key": "state",
     "state_name": {
         "1": "PRELAUNCH",

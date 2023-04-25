@@ -29,6 +29,16 @@ class Chart:
             data, x=x_key, y=y_keys, title=Chart.make_chart_title(','.join(y_keys), x_key),
         )
         fig.update_layout(margin=Chart.MARGIN)
+        fig.update_layout(legend=dict(
+            x=0,
+            y=0.7,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            )
+        ))
         return Chart.__make_dcc(fig)
 
     @staticmethod
