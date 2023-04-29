@@ -30,8 +30,8 @@ class Chart:
         )
         fig.update_layout(margin=Chart.MARGIN)
         fig.update_layout(legend=dict(
-            x=0,
-            y=0.7,
+            x=0.025,
+            y=0.975,
             traceorder="normal",
             font=dict(
                 family="sans-serif",
@@ -50,6 +50,16 @@ class Chart:
             data, x=x_key, y=y_key, z=z_key, title='3D: ' + Chart.make_chart_title(y_key, x_key, z_key)
         )
         fig.update_layout(margin=Chart.MARGIN, scene_camera=camera)
+        fig.update_layout(legend=dict(
+            x=0.025,
+            y=0.975,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            )
+        ))
         return Chart.__make_dcc(fig)
 
     @staticmethod
@@ -58,6 +68,16 @@ class Chart:
             data, x=x_key, y=y_keys, title=Chart.make_chart_title(','.join(y_keys), x_key),
         )
         fig.update_layout(margin=Chart.MARGIN)
+        fig.update_layout(legend=dict(
+            x=0.025,
+            y=0.975,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            )
+        ))
         return Chart.__make_dcc(fig)
 
     @staticmethod
@@ -69,6 +89,16 @@ class Chart:
             data, x=x_key, y=y_key, z=z_key, title='3D: {}'.format(Chart.make_chart_title(y_key, x_key, z_key))
         )
         fig.update_layout(margin=Chart.MARGIN, scene_camera=camera)
+        fig.update_layout(legend=dict(
+            x=0.025,
+            y=0.975,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            )
+        ))
         return Chart.__make_dcc(fig)
 
     @staticmethod
@@ -77,6 +107,16 @@ class Chart:
             data, r, theta, title='Polar: r: {} - theta: {}'.format(r, theta),
         )
         fig.update_layout(margin=Chart.MARGIN)
+        fig.update_layout(legend=dict(
+            x=0.025,
+            y=0.975,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            )
+        ))
         return Chart.__make_dcc(fig)
 
     @staticmethod
@@ -85,6 +125,16 @@ class Chart:
             data, r, theta, title='Polar: r: {} - theta: {}'.format(r, theta),
         )
         fig.update_layout(margin=Chart.MARGIN)
+        fig.update_layout(legend=dict(
+            x=0.025,
+            y=0.975,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            )
+        ))
         return Chart.__make_dcc(fig)
 
     @staticmethod

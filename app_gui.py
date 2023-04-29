@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 
 import time
@@ -6,10 +7,28 @@ from deps import *
 from deps.gui import *
 from deps.gui import Chart
 
+HOME_LATITUDE = None
+HOME_LONGITUDE = None
+HOME_ALTITUDE = None
+
 APP_NAME = __name__
 USE_DEBUG = False
 USE_MOCK = False
 ALL_BAUD_OPT = [{'label': k, 'value': k} for k in ALL_BAUD_STR]
+
+if sys.version_info < (3, 11):
+    raise AssertionError('Required Python 3.11 or newer, please install appropriate version!')
+
+if HOME_LATITUDE is None:
+    raise ValueError('Please define the station\'s latitude!')
+
+if HOME_LONGITUDE is None:
+    raise ValueError('Please define the station\'s longitude!')
+
+if HOME_LONGITUDE is None:
+    raise ValueError('Please define the station\'s altitude!')
+
+HOME_GEO = GeoCoordinate(HOME_LATITUDE, HOME_LONGITUDE, HOME_ALTITUDE)
 
 
 class ProgramGUI(Program):
@@ -145,6 +164,12 @@ class ProgramGUI(Program):
 
         # Misc Variables
         self.serial_connections = [False] * NUM_SERIAL
+        self.serial_connected_lut = set()
+
+        self.azimuth = [0.0, 0.0]
+        self.elevation = [0.0, 0.0]
+        self.los = [0.0, 0.0]
+        self.hcd = [0.0, 0.0]
 
     def __init_callbacks(self):
         app = self.app
@@ -161,7 +186,12 @@ class ProgramGUI(Program):
             })
 
             # BEGIN USER ADD OPTIONAL DATA SECTION
-            latest_data = add_front_df(latest_data, 'azimuth', 'test_text')
+            for i in [1, 0]:
+                latest_data = add_front_df(latest_data, f'[{i}] Elevation', f'{self.elevation[i]}°')
+                latest_data = add_front_df(latest_data, f'[{i}] Azimuth', f'{self.azimuth[i]}°')
+                latest_data = add_front_df(latest_data, f'[{i}] Line of Sight', f'{self.los[i]} m')
+                latest_data = add_front_df(latest_data, f'[{i}] Ground Distance', f'{self.hcd[i]} m')
+
             # END USER ADD OPTIONAL DATA SECTION
 
             return dbc.Table.from_dataframe(
@@ -226,10 +256,11 @@ class ProgramGUI(Program):
 
             for i, (serial_port, serial_baud) in enumerate(zip(serial_ports, serial_bauds)):
                 if btn_clicked == Component.btn_connects[i].id:
-                    if not serial_port:
+                    if not serial_port or serial_port in self.serial_connected_lut:
                         continue
-                    self.port_names[i] = serial_port or self.port_names
-                    self.port_bauds[i] = self.port_bauds if serial_baud is None else int(serial_baud)
+                    self.port_names[i] = serial_port or self.port_names[i]
+                    self.port_bauds[i] = self.port_bauds[i] if serial_baud is None else int(serial_baud)
+
                     self.__connect_serial(i)
                     self.__start(i)
                 elif btn_clicked == Component.btn_disconnects[i].id:
@@ -443,10 +474,14 @@ class ProgramGUI(Program):
             self.port_names[i], self.port_bauds[i],
             auto_reconnect=True
         )
+        if self.serial_connections[i]:
+            self.serial_connected_lut.add(self.port_names[i])
         return self.serial_connections[i]
 
     def __disconnect_serial(self, i):
         self.serial_ports[i].disconnect()
+        if self.port_names[i] in self.serial_connected_lut:
+            self.serial_connected_lut.remove(self.port_names[i])
         self.serial_connections[i] = False
 
     def __backend_mock(self):
@@ -482,13 +517,28 @@ class ProgramGUI(Program):
                     print(f'{i}: {self.data_back}')
 
                     if str(i) in self.kml_keys:
-                        self.queue_coords[i].push(
-                            GeoCoordinate(
-                                dat_dict[self.kml_keys[str(i)]['lat']],
-                                dat_dict[self.kml_keys[str(i)]['lon']],
-                                dat_dict[self.kml_keys[str(i)]['alt']]
-                            )
+                        curr_coord = GeoCoordinate(
+                            dat_dict[self.kml_keys[str(i)]['lat']],
+                            dat_dict[self.kml_keys[str(i)]['lon']],
+                            dat_dict[self.kml_keys[str(i)]['alt']]
                         )
+                        coord_pair = GeoPair(HOME_GEO, curr_coord)
+
+                        self.queue_coords[i].push(
+                            curr_coord
+                        )
+
+                        if str(i) == "0":
+                            self.los[0] = coord_pair.line_of_sight
+                            self.hcd[0] = coord_pair.ground_distance
+                            self.azimuth[0] = coord_pair.azimuth
+                            self.elevation[0] = coord_pair.elevation_approx
+                        else:
+                            self.los[1] = coord_pair.line_of_sight
+                            self.hcd[1] = coord_pair.ground_distance
+                            self.azimuth[1] = coord_pair.azimuth
+                            self.elevation[1] = coord_pair.elevation_approx
+
                     self.queue_csvs[i].push(dat)
 
                     self.data_no += 1
@@ -505,7 +555,9 @@ class ProgramGUI(Program):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
         self.backend_thread.start()
-        self.app.run_server(debug=USE_DEBUG)
+        self.app.run(host='localhost',
+                     port=8050,
+                     debug=USE_DEBUG)
 
     def stop(self):
         for i in range(NUM_SERIAL):
