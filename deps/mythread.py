@@ -61,6 +61,7 @@ class ThreadFileWriter(ThreadBase):
     def __init__(self, file_writer: FileWriter,
                  queue_csv: Queue,
                  queue_coord: Queue,
+                 queue_raw: Queue = None,
                  interval: float = 0.050,
                  timeout: float = 4.000):
         """
@@ -76,6 +77,7 @@ class ThreadFileWriter(ThreadBase):
         self.__writer = file_writer
         self.__queue_csv = queue_csv
         self.__queue_coord = queue_coord
+        self.__queue_raw = queue_raw if queue_raw is not None else Queue()
         self.__interval = interval
         self.__logger = Logger(target='THREAD_FILE')
 
@@ -88,6 +90,10 @@ class ThreadFileWriter(ThreadBase):
             if self.__queue_coord.available():
                 dat = self.__queue_coord.pop()
                 self.__writer.append_coord(dat)
+
+            if self.__queue_raw.available():
+                dat = self.__queue_raw.pop()
+                self.__writer.append_csv(dat)
 
             time.sleep(self.__interval)
 
@@ -107,6 +113,10 @@ class ThreadFileWriter(ThreadBase):
     @property
     def queue_coord(self):
         return self.__queue_coord
+
+    @property
+    def queue_raw(self):
+        return self.__queue_raw
 
     @property
     def _logger(self):

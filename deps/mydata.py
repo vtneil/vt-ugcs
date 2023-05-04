@@ -87,6 +87,7 @@ class Data:
     def pop(self, n: int = -1):
         self.__df.drop(self.__df.index[n], inplace=True)
         self.__df.reset_index(drop=True, inplace=True)
+        self.__df = pd.DataFrame(data=self.__df.values, index=self.__df.index, columns=self.__df.columns)
 
     def pop_many(self, n: int):
         if n < 1:
@@ -95,6 +96,7 @@ class Data:
         for i in range(n):
             self.__df.drop(self.__df.index[-1], inplace=True)
         self.__df.reset_index(drop=True, inplace=True)
+        self.__df = pd.DataFrame(data=self.__df.values, index=self.__df.index, columns=self.__df.columns)
 
     def available(self):
         return self.__len__() > 0

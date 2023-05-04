@@ -7,9 +7,10 @@ from deps import *
 from deps.gui import *
 from deps.gui import Chart
 
-HOME_LATITUDE = None
-HOME_LONGITUDE = None
-HOME_ALTITUDE = None
+pd.set_option("display.max_colwidth", None)
+
+HOME_LATITUDE, HOME_LONGITUDE = 13.023548, 101.450420
+HOME_ALTITUDE = 20
 
 APP_NAME = __name__
 USE_DEBUG = False
@@ -39,7 +40,8 @@ class ProgramGUI(Program):
                     'content': 'width=device-width, initial-scale=1'}],
         prevent_initial_callbacks=True,
         suppress_callback_exceptions=True,
-        title=APP_TITLE
+        title=APP_TITLE,
+        update_title=None
     )
 
     def __init__(self):
@@ -79,6 +81,7 @@ class ProgramGUI(Program):
         self.trim_length = self.settings['data_points']
         self.all_charts = []
         self.all_plots = []
+        self.data_ready = False
 
         # Generating information, keys for referencing
         self.id_to_index = {
@@ -425,24 +428,31 @@ class ProgramGUI(Program):
                 self.all_plots.append(__new_chart)
 
             # Data Polling/Updating
-            elif event_polling:
+            elif event_polling and self.data_ready:
                 for i, __chart in enumerate(self.all_charts):
                     if __chart['plot_type'] in [Chart.PLOT_XYZ, Chart.PLOT_POLAR]:
-                        self.all_plots[i] = Component.make_plot_area(
-                            data=self.data.df.tail(self.trim_length),
-                            x_key=__chart['x'],
-                            y_keys=__chart['y'],
-                            z_key=__chart['z'],
-                            r_key=__chart['r'],
-                            theta_key=__chart['theta'],
-                            line_style=__chart['style'],
-                            plot_type=__chart['plot_type']
-                        )
+                        # then plot
+                        plot_data = self.data.df.tail(self.trim_length)
+                        try:
+                            self.all_plots[i] = Component.make_plot_area(
+                                data=plot_data,
+                                x_key=__chart['x'],
+                                y_keys=__chart['y'],
+                                z_key=__chart['z'],
+                                r_key=__chart['r'],
+                                theta_key=__chart['theta'],
+                                line_style=__chart['style'],
+                                plot_type=__chart['plot_type']
+                            )
+                        except ValueError as e:
+                            print(plot_data.dtypes)
+                            for yk in __chart['y']:
+                                print(plot_data[yk])
+
                     elif __chart['plot_type'] == Chart.PLOT_MESH:
                         self.all_plots[i] = Chart.make_mesh_render()
 
-            layout = Content.unflatten(self.all_plots)
-            return layout
+            return Content.unflatten(self.all_plots)
 
         @app.callback(
             Output('hidden-div', 'children'),
@@ -543,7 +553,35 @@ class ProgramGUI(Program):
 
                     self.data_no += 1
 
-            time.sleep(0.100)
+            self.data_ready = False
+
+            for i, __chart in enumerate(self.all_charts):
+                if __chart['plot_type'] in [Chart.PLOT_XYZ, Chart.PLOT_POLAR]:
+                    # check for data validity before plot
+                    while self.data.available():
+                        check_bool = True
+
+                        if __chart['x'] is not None:
+                            check_bool &= not isinstance(self.data.back()[__chart['x']], str)
+                        if __chart['y'] is not None:
+                            for y_key in __chart['y']:
+                                check_bool &= not isinstance(self.data.back()[y_key], str)
+                        if __chart['z'] is not None:
+                            check_bool &= not isinstance(self.data.back()[__chart['z']], str)
+                        if __chart['r'] is not None:
+                            check_bool &= not isinstance(self.data.back()[__chart['r']], str)
+                        if __chart['theta'] is not None:
+                            check_bool &= not isinstance(self.data.back()[__chart['theta']], str)
+
+                        if check_bool:
+                            break
+                        else:
+                            if self.data.available():
+                                self.data.pop()
+
+            self.data_ready = True
+
+            time.sleep(0.010)
 
     def start(self):
         """

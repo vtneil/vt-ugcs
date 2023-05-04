@@ -53,6 +53,10 @@ class SerialReader(AbstractCommunication):
         else:
             self.__stream = self.__stream[__idx + 1:]
 
+        # Remove Carriage Return
+        if terminator == b'\n':
+            __msg = __msg.replace(b'\r', b'')
+
         return __msg.decode(**self.__encoding)
 
     def read(self):

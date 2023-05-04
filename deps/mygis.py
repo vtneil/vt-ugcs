@@ -7,9 +7,9 @@ class GeoCoordinate:
     """
     Coordinate set: latitude, longitude, altitude
     """
-    lat: int | float | str = None
-    lon: int | float | str = None
-    alt: int | float | str = None
+    lat: int | float | str = 0.0
+    lon: int | float | str = 0.0
+    alt: int | float | str = 0.0
 
     def __post_init__(self):
         """
@@ -17,14 +17,30 @@ class GeoCoordinate:
 
         :return:
         """
-        if self.lat is not None:
-            self.lat = float(self.lat)
 
-        if self.lon is not None:
-            self.lon = float(self.lon)
+        try:
+            if self.lat is None:
+                self.lat = 0.0
+            else:
+                self.lat = float(self.lat)
+        except ValueError:
+            self.lat = 0.0
 
-        if self.alt is not None:
-            self.alt = float(self.alt)
+        try:
+            if self.lon is None:
+                self.lon = 0.0
+            else:
+                self.lon = float(self.lon)
+        except ValueError:
+            self.lon = 0.0
+
+        try:
+            if self.alt is None:
+                self.alt = 0.0
+            else:
+                self.alt = float(self.alt)
+        except ValueError:
+            self.alt = 0.0
 
     def __bool__(self):
         return self.__len__() > 0
@@ -33,13 +49,13 @@ class GeoCoordinate:
         return sum((x is not None for x in dataclasses.asdict(self).values()))
 
     def __str__(self):
-        return '{},{},{}'.format(self.lat, self.lon, self.alt)
+        return f'({self.lat}, {self.lon}, {self.alt})'
 
     def __repr__(self):
         self.__str__()
 
     def valid(self) -> bool:
-        if self.lat is None or self.lon is None:
+        if self.lat is None or self.lon is None or self.alt is None:
             return False
         return 1 <= math.fabs(self.lat) <= 90 and 1 <= math.fabs(self.lon) <= 180
 
@@ -134,3 +150,14 @@ class GeoPair:
         :return: Elevation angle in degrees
         """
         return math.degrees(math.atan2(self.alt, self.arc_length))
+
+
+if __name__ == '__main__':
+    g1 = GeoCoordinate()
+    g2 = GeoCoordinate()
+    gp = GeoPair(g1, g2)
+
+    print(gp.ground_distance)
+    print(gp.line_of_sight)
+    print(gp.azimuth)
+    print(gp.elevation_approx)

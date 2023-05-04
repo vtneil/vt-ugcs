@@ -6,6 +6,27 @@ from .mygis import GeoCoordinate
 
 
 class _GoogleEarthKMLText:
+    class Color:
+        WHITE = 'ffffffff'
+        RED = 'ff0000ff'
+        GREEN = 'ff00ff00'
+        BLUE = 'ffff0000'
+        YELLOW = 'ff00ffff'
+        PURPLE = 'ff800080'
+        ORANGE = 'ff0080ff'
+        BROWN = 'ff336699'
+
+    colors = [
+        Color.YELLOW,
+        Color.PURPLE,
+        Color.ORANGE,
+        Color.BLUE,
+        Color.RED,
+        Color.GREEN,
+        Color.BROWN,
+        Color.WHITE
+    ]
+
     earth_live_pre = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                       '<kml xmlns="http://www.opengis.net/kml/2.2" '
                       'xmlns:gx="http://www.google.com/kml/ext/2.2">\n'
@@ -137,6 +158,8 @@ class FileUtil:
 
 
 class FileWriter:
+    ref_cnt = 0
+
     def __init__(self, root_file: str,
                  save_name: str,
                  extension: str = 'csv', /, *,
@@ -192,6 +215,10 @@ class FileWriter:
         FileUtil.mkdir(self.folder_name)
         self.__renew_kml()
 
+        self.id = FileWriter.ref_cnt % len(_GoogleEarthKMLText.colors)
+
+        FileWriter.ref_cnt += 1
+
     def append_csv(self, data: np.ndarray | list | tuple | Iterable, delimiter: str = ','):
         """
         Append list or numpy array of data to the file in delimited format
@@ -206,13 +233,12 @@ class FileWriter:
             f.write(delimiter.join(str(e) for e in data))
             f.write('\n')
 
-    def append_coord(self, coord: GeoCoordinate, color: str = 'ff00ffff'):
+    def append_coord(self, coord: GeoCoordinate):
         """
         Append coordinate to Google Earth KML reference file, this method does not create
         live KML file. User must call another method to create it.
 
         :param coord: GeoCoordinate object
-        :param color: Color in "aabbggrr" format
         :return:
         """
         if not coord.valid():
@@ -224,6 +250,8 @@ class FileWriter:
         )
 
         __coord = '{},{},{}'.format(__lon, __lat, __alt)
+
+        color = _GoogleEarthKMLText.colors[self.id]
 
         self.__ptr_ref = self.__append_kml(__coord, self.name_kml_ref, self.__ptr_ref, color)
         self.__ptr_save = self.__append_kml(__coord, self.name_kml_save, self.__ptr_save, color)
