@@ -63,8 +63,8 @@ class ProgramGUI(Program):
         ], className='m-5')
 
         # Backend: General Components
-        self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'))
-        self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.json'))
+        self.settings = PreferencesTree.from_file(os.path.abspath('settings.toml'), 'toml')
+        self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.toml'), 'toml')
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']

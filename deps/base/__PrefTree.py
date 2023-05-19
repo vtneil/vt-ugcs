@@ -1,12 +1,19 @@
 import json
+import tomllib
 from pprint import pprint
+from typing import Type
 from .__CustomException import ArgumentException
+from .__PrefLoader import *
 
 
 class PreferencesTreeBase:
-    def __init__(self, filename: str = None, pref_dict: dict = None):
+    def __init__(self, filename: str = None,
+                 pref_dict: dict = None,
+                 loader: Type[PreferencesLoaderBase] = PreferencesLoaderTOML,
+                 default_filename='settings.toml'):
+        self.__loader = loader
         self.__pref: dict | None = None
-        self.__filename = 'settings.json'
+        self.__filename = default_filename
 
         if filename is not None and pref_dict is not None:
             raise ArgumentException('Wrong argument called on {}!'.format(self.__class__.__name__))
@@ -14,8 +21,7 @@ class PreferencesTreeBase:
             raise ArgumentException('No argument called on {}!'.format(self.__class__.__name__))
         if filename is not None:
             self.__filename = filename
-            with open(filename, mode='r', encoding='utf-8') as __f:
-                self.__pref = json.load(__f)
+            self.__pref = self.__loader.load(filename)
         elif pref_dict is not None:
             self.__pref = pref_dict
 
@@ -55,10 +61,9 @@ class PreferencesTreeBase:
         :return:
         """
         if filename is None:
-            self.write_json(self.__pref, self.__filename)
+            self.__loader.write(self.__pref, self.__filename)
         else:
-            self.write_json(self.__pref, filename)
-        return
+            self.__loader.write(self.__pref, filename)
 
     def print(self):
         pprint(self.__pref)
@@ -68,19 +73,3 @@ class PreferencesTreeBase:
 
     def __repr__(self):
         return self.__str__()
-
-    @staticmethod
-    def write_json(pref_to_write: dict, inp_file_dir: str, *, indent: int = 4):
-        """
-        Write dictionary to json file
-
-        :param pref_to_write: Dictionary
-        :param inp_file_dir: File name
-        :param indent: Indentation space
-        :return:
-        """
-        if pref_to_write:
-            with open(inp_file_dir, mode='w', encoding='utf-8') as __f:
-                json.dump(pref_to_write, __f, indent=indent)
-            return True
-        return False

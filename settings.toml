@@ -1,0 +1,85 @@
+header = "BALLOON"
+delimiter = ","
+file_name = "team_a_b"
+file_extension = "csv"
+data_points = 120
+state_key = "state"
+
+[kml_keys.0]
+lat = "latitude"
+lon = "longitude"
+alt = "altitude"
+
+[kml_keys.1]
+lat = "latitude"
+lon = "longitude"
+alt = "altitude"
+
+[[plot]]
+plot_type = "xyz"
+style = "scatter"
+
+[plot.x]
+0 = "counter"
+
+[plot.y]
+0 = [
+    "altitude"
+]
+
+[[plot]]
+plot_type = "xyz"
+style = "scatter"
+
+[plot.x]
+0 = "counter"
+
+[plot.y]
+0 = [
+    "x1"
+]
+
+[[plot]]
+plot_type = "xyz"
+style = "scatter"
+
+[plot.x]
+0 = "counter"
+
+[plot.y]
+0 = [
+    "x2"
+]
+
+[[plot]]
+plot_type = "xyz"
+style = "scatter"
+
+[plot.x]
+0 = "counter"
+
+[plot.y]
+0 = [
+    "altitude",
+    "x1"
+]
+
+[[plot]]
+plot_type = "xyz"
+style = "scatter"
+
+[plot.x]
+0 = "x1"
+
+[plot.y]
+0 = [
+    "altitude",
+    "counter"
+]
+
+[state_name]
+1 = "PRELAUNCH"
+2 = "ASCENT"
+3 = "HAVEN"
+4 = "BREEZE"
+5 = "BIND"
