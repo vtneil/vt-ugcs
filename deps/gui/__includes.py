@@ -8,10 +8,10 @@ import plotly.graph_objs as go
 
 from dash import dcc, html, Dash, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
-import dash_vtk as vtk
-from dash_vtk.utils import to_mesh_state
-from dash_vtk.utils import to_volume_state
-from vtkmodules.vtkImagingCore import vtkRTAnalyticSource
+# import dash_vtk as vtk
+# from dash_vtk.utils import to_mesh_state
+# from dash_vtk.utils import to_volume_state
+# from vtkmodules.vtkImagingCore import vtkRTAnalyticSource
 
 from .parameters import *
 

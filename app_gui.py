@@ -384,12 +384,13 @@ class ProgramGUI(Program):
                         ))
                         self.all_plots.append(__new_chart)
                     elif plot_type == Chart.PLOT_MESH:
-                        __new_chart = Chart.make_mesh_render()
-                        self.all_charts.append(Chart.dict_info(
-                            model='',
-                            plot_type=plot_item['plot_type']
-                        ))
-                        self.all_plots.append(__new_chart)
+                        pass
+                        # __new_chart = Chart.make_mesh_render()
+                        # self.all_charts.append(Chart.dict_info(
+                        #     model='',
+                        #     plot_type=plot_item['plot_type']
+                        # ))
+                        # self.all_plots.append(__new_chart)
 
             # When Click Add XYZ Chart
             elif event_click_xyz:
@@ -450,7 +451,8 @@ class ProgramGUI(Program):
                                 print(plot_data[yk])
 
                     elif __chart['plot_type'] == Chart.PLOT_MESH:
-                        self.all_plots[i] = Chart.make_mesh_render()
+                        pass
+                        # self.all_plots[i] = Chart.make_mesh_render()
 
             return Content.unflatten(self.all_plots)
 

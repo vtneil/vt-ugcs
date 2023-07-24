@@ -137,20 +137,20 @@ class Chart:
         ))
         return Chart.__make_dcc(fig)
 
-    @staticmethod
-    def make_mesh_render():
-        data_src = vtkRTAnalyticSource()
-        data_src.Update()
-        dataset = data_src.GetOutput()
-        mesh_state = to_mesh_state(dataset)
-
-        content = vtk.View([
-            vtk.GeometryRepresentation([
-                vtk.Mesh(state=mesh_state)
-            ])
-        ])
-
-        return content
+    # @staticmethod
+    # def make_mesh_render():
+    #     data_src = vtkRTAnalyticSource()
+    #     data_src.Update()
+    #     dataset = data_src.GetOutput()
+    #     mesh_state = to_mesh_state(dataset)
+    #
+    #     content = vtk.View([
+    #         vtk.GeometryRepresentation([
+    #             vtk.Mesh(state=mesh_state)
+    #         ])
+    #     ])
+    #
+    #     return content
 
     @staticmethod
     def make_image_area(img: np.ndarray):
