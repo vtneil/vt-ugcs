@@ -1,5 +1,5 @@
 import json
-import tomllib
+# import tomllib
 from pprint import pprint
 from typing import Type
 from .__CustomException import ArgumentException
@@ -9,8 +9,8 @@ from .__PrefLoader import *
 class PreferencesTreeBase:
     def __init__(self, filename: str = None,
                  pref_dict: dict = None,
-                 loader: Type[PreferencesLoaderBase] = PreferencesLoaderTOML,
-                 default_filename='settings.toml'):
+                 loader: Type[PreferencesLoaderBase] = PreferencesLoaderJSON,
+                 default_filename='settings.json'):
         self.__loader = loader
         self.__pref: dict | None = None
         self.__filename = default_filename

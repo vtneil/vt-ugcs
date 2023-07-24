@@ -17,8 +17,8 @@ USE_DEBUG = False
 USE_MOCK = False
 ALL_BAUD_OPT = [{'label': k, 'value': k} for k in ALL_BAUD_STR]
 
-if sys.version_info < (3, 11):
-    raise AssertionError('Required Python 3.11 or newer, please install appropriate version!')
+if sys.version_info < (3, 10):
+    raise AssertionError('Required Python 3.10 or newer, please install appropriate version!')
 
 if HOME_LATITUDE is None:
     raise ValueError('Please define the station\'s latitude!')
@@ -63,8 +63,8 @@ class ProgramGUI(Program):
         ], className='m-5')
 
         # Backend: General Components
-        self.settings = PreferencesTree.from_file(os.path.abspath('settings.toml'), 'toml')
-        self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.toml'), 'toml')
+        self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'), 'json')
+        self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.json'), 'json')
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']

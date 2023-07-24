@@ -4,8 +4,8 @@ from deps import *
 
 class ProgramCLI(Program):
     def __init__(self):
-        self.settings = PreferencesTree.from_file('settings.toml')
-        self.data_format = PreferencesTree.from_file('data_format.toml')
+        self.settings = PreferencesTree.from_file('settings.json')
+        self.data_format = PreferencesTree.from_file('data_format.json')
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']

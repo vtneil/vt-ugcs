@@ -1,5 +1,5 @@
 import json
-import tomllib as toml
+# import tomllib as toml
 
 
 class PreferencesLoaderBase:
@@ -27,12 +27,12 @@ class PreferencesLoaderJSON(PreferencesLoaderBase):
         return False
 
 
-class PreferencesLoaderTOML(PreferencesLoaderBase):
-    @staticmethod
-    def load(filename: str):
-        with open(filename, mode='rb') as __f:
-            return toml.load(__f)
-
-    @staticmethod
-    def write(pref_to_write: dict, inp_file_dir: str):
-        pass
+# class PreferencesLoaderTOML(PreferencesLoaderBase):
+#     @staticmethod
+#     def load(filename: str):
+#         with open(filename, mode='rb') as __f:
+#             return toml.load(__f)
+#
+#     @staticmethod
+#     def write(pref_to_write: dict, inp_file_dir: str):
+#         pass

@@ -5,7 +5,7 @@ from .base.__PrefTree import *
 
 class PreferencesTree(PreferencesTreeBase):
     @staticmethod
-    def from_file(filename: str, fmt: Literal['json', 'toml'] = 'toml'):
+    def from_file(filename: str, fmt: Literal['json', 'toml'] = 'json'):
         """
         Open preferences from file
 
@@ -15,8 +15,8 @@ class PreferencesTree(PreferencesTreeBase):
         """
         if fmt == 'json':
             return PreferencesTree(filename=filename, loader=PreferencesLoaderJSON)
-        else:
-            return PreferencesTree(filename=filename, loader=PreferencesLoaderTOML)
+        # else:
+        #     return PreferencesTree(filename=filename, loader=PreferencesLoaderTOML)
 
     @staticmethod
     def from_dict(pref_dict: dict):
