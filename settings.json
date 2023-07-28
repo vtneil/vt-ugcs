@@ -1,7 +1,7 @@
 {
-    "header": "BALLOON",
+    "header": "PSG4B",
     "delimiter": ",",
-    "file_name": "team_a_b",
+    "file_name": "psg4b",
     "file_extension": "csv",
     "kml_keys": {
         "0": {

@@ -13,23 +13,23 @@ class BaseComponent:
             [], id=f'dropdown-port-{i}', disabled=True, clearable=False,
             persistence='true', persistence_type='session',
             placeholder='Choose serial port from below',
-        ) for i in range(NUM_SERIAL)]
+        ) for i in range(NUM_MAX_SERIAL)]
 
         self.dropdown_bauds = [dcc.Dropdown(
             [], id=f'dropdown-baud-{i}', disabled=True, clearable=False,
             persistence='true', persistence_type='session',
             placeholder='Choose baud rate from below'
-        ) for i in range(NUM_SERIAL)]
+        ) for i in range(NUM_MAX_SERIAL)]
 
         self.btn_connects = [dbc.Button(
             'Connect', id=f'btn-connect-{i}',
             className='mx-1 btn-primary disabled'
-        ) for i in range(NUM_SERIAL)]
+        ) for i in range(NUM_MAX_SERIAL)]
 
         self.btn_disconnects = [dbc.Button(
             'Disconnect', id=f'btn-disconnect-{i}',
             className='mx-1 btn-danger disabled'
-        ) for i in range(NUM_SERIAL)]
+        ) for i in range(NUM_MAX_SERIAL)]
 
         # Interval
 
@@ -73,7 +73,7 @@ class BaseComponent:
             html.Br(),
             html.Hr(),
             html.Br()
-        ]) for i in range(NUM_SERIAL)]
+        ]) for i in range(NUM_MAX_SERIAL)]
 
         self.sidebar_dataframe = html.Div([])
 

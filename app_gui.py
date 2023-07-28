@@ -9,8 +9,9 @@ from deps.gui import Chart
 
 pd.set_option("display.max_colwidth", None)
 
-HOME_LATITUDE, HOME_LONGITUDE = 13.023548, 101.450420
-HOME_ALTITUDE = 20
+# Phimai Launch Station Location
+HOME_LATITUDE, HOME_LONGITUDE = 15.182228, 102.563697
+HOME_ALTITUDE = 210
 
 APP_NAME = __name__
 USE_DEBUG = False
@@ -123,21 +124,22 @@ class ProgramGUI(Program):
                     plot_item['theta'] = dev_field(dev_id, plot_item['theta'][dev_id])
 
         # Backend: Serial Components
-        self.serial_ports = [SerialPort() for _ in range(NUM_SERIAL)]
-        self.port_names = [''] * NUM_SERIAL
-        self.port_bauds = [115200] * NUM_SERIAL
-        self.serial_readers = [SerialReader(self.serial_ports[i]) for i in range(NUM_SERIAL)]
-        self.queue_serials = [Queue() for _ in range(NUM_SERIAL)]
+        self.serial_ports = [SerialPort() for _ in range(NUM_MAX_SERIAL)]
+        self.port_names = [''] * NUM_MAX_SERIAL
+        self.port_bauds = [115200] * NUM_MAX_SERIAL
+        self.serial_readers = [SerialReader(self.serial_ports[i]) for i in range(NUM_MAX_SERIAL)]
+        self.queue_serials = [Queue() for _ in range(NUM_MAX_SERIAL)]
 
         # Backend: Device 0 Data Parser and File Writer Components
         self.parsers = [
             StringParser(self.data_format_dict[str(i)])
             if str(i) in self.data_format_dict.tree else None
-            for i in range(NUM_SERIAL)
+            for i in range(NUM_MAX_SERIAL)
         ]
-        self.writers = [FileWriter(__file__, self.file_name, self.extension, device_id=i) for i in range(NUM_SERIAL)]
-        self.queue_csvs = [Queue() for _ in range(NUM_SERIAL)]
-        self.queue_coords = [Queue() for _ in range(NUM_SERIAL)]
+        self.writers = [FileWriter(__file__, self.file_name, self.extension, device_id=i) for i in
+                        range(NUM_MAX_SERIAL)]
+        self.queue_csvs = [Queue() for _ in range(NUM_MAX_SERIAL)]
+        self.queue_coords = [Queue() for _ in range(NUM_MAX_SERIAL)]
 
         # Serial Device 0 Thread
         self.serial_threads = [ThreadSerial(
@@ -166,13 +168,14 @@ class ProgramGUI(Program):
         )
 
         # Misc Variables
-        self.serial_connections = [False] * NUM_SERIAL
+        self.serial_connections = [False] * NUM_MAX_SERIAL
         self.serial_connected_lut = set()
+        self.num_devs_geo = len(self.settings['kml_keys'])
 
-        self.azimuth = [0.0, 0.0]
-        self.elevation = [0.0, 0.0]
-        self.los = [0.0, 0.0]
-        self.hcd = [0.0, 0.0]
+        self.azimuth = [0.0] * self.num_devs_geo
+        self.elevation = [0.0] * self.num_devs_geo
+        self.los = [0.0] * self.num_devs_geo
+        self.hcd = [0.0] * self.num_devs_geo
 
     def __init_callbacks(self):
         app = self.app
@@ -189,7 +192,7 @@ class ProgramGUI(Program):
             })
 
             # BEGIN USER ADD OPTIONAL DATA SECTION
-            for i in [1, 0]:
+            for i in reversed([0, 1]):
                 latest_data = add_front_df(latest_data, f'[{i}] Elevation', f'{self.elevation[i]}°')
                 latest_data = add_front_df(latest_data, f'[{i}] Azimuth', f'{self.azimuth[i]}°')
                 latest_data = add_front_df(latest_data, f'[{i}] Line of Sight', f'{self.los[i]} m')
@@ -227,7 +230,7 @@ class ProgramGUI(Program):
             self.serial_ports[0].refresh()
             all_ports = self.serial_ports[0].port_pair.keys()
             new_opt = [{'label': k, 'value': k} for k in all_ports]
-            return [*([new_opt] * NUM_SERIAL), *([ALL_BAUD_OPT] * NUM_SERIAL)]
+            return [*([new_opt] * NUM_MAX_SERIAL), *([ALL_BAUD_OPT] * NUM_MAX_SERIAL)]
 
         # Lock serial elements on connection and disconnection
         @app.callback(
@@ -252,8 +255,8 @@ class ProgramGUI(Program):
             # btn_connects = args[1:1 + NUM_SERIAL]
             # btn_disconnects = args[1 + NUM_SERIAL:1 + 2 * NUM_SERIAL]
 
-            serial_ports = args[1 + 2 * NUM_SERIAL:1 + 3 * NUM_SERIAL]
-            serial_bauds = args[1 + 3 * NUM_SERIAL:1 + 4 * NUM_SERIAL]
+            serial_ports = args[1 + 2 * NUM_MAX_SERIAL:1 + 3 * NUM_MAX_SERIAL]
+            serial_bauds = args[1 + 3 * NUM_MAX_SERIAL:1 + 4 * NUM_MAX_SERIAL]
 
             btn_clicked = ctx.triggered_id
 
@@ -275,7 +278,7 @@ class ProgramGUI(Program):
             ret_val3 = []
             ret_val4 = []
 
-            for i in range(NUM_SERIAL):
+            for i in range(NUM_MAX_SERIAL):
                 if self.serial_connections[i]:
                     ret_val1.append('mx-1 btn-primary disabled')
                     ret_val2.append('mx-1 btn-danger')
@@ -500,7 +503,7 @@ class ProgramGUI(Program):
         i = 0
         while self.backend_status:
             dat = [
-                0.5 * i ** 2 + 0.8 * j ** 2 if j > 1 else (0 if j == 0 else i)
+                0.5 * (i ** 2) + 0.8 * (j ** 2) if j > 1 else (0 if j == 0 else i)
                 for j in range(len(self.data_format_mod))
             ]
             dat[2] = dat[2] % 360
@@ -514,7 +517,7 @@ class ProgramGUI(Program):
             self.__backend_mock()
 
         while self.backend_status:
-            for i in range(NUM_SERIAL):
+            for i, did in enumerate(self.kml_keys):
                 if self.queue_serials[i].available():
                     dat_dict: dict = self.queue_serials[i].pop()
                     dat = list(dat_dict.values())
@@ -528,28 +531,21 @@ class ProgramGUI(Program):
 
                     print(f'{i}: {self.data_back}')
 
-                    if str(i) in self.kml_keys:
-                        curr_coord = GeoCoordinate(
-                            dat_dict[self.kml_keys[str(i)]['lat']],
-                            dat_dict[self.kml_keys[str(i)]['lon']],
-                            dat_dict[self.kml_keys[str(i)]['alt']]
-                        )
-                        coord_pair = GeoPair(HOME_GEO, curr_coord)
+                    curr_coord = GeoCoordinate(
+                        dat_dict[self.kml_keys[i]['lat']],
+                        dat_dict[self.kml_keys[i]['lon']],
+                        dat_dict[self.kml_keys[i]['alt']]
+                    )
+                    coord_pair = GeoPair(HOME_GEO, curr_coord)
 
-                        self.queue_coords[i].push(
-                            curr_coord
-                        )
+                    self.queue_coords[i].push(
+                        curr_coord
+                    )
 
-                        if str(i) == "0":
-                            self.los[0] = coord_pair.line_of_sight
-                            self.hcd[0] = coord_pair.ground_distance
-                            self.azimuth[0] = coord_pair.azimuth
-                            self.elevation[0] = coord_pair.elevation_approx
-                        else:
-                            self.los[1] = coord_pair.line_of_sight
-                            self.hcd[1] = coord_pair.ground_distance
-                            self.azimuth[1] = coord_pair.azimuth
-                            self.elevation[1] = coord_pair.elevation_approx
+                    self.los[i] = coord_pair.line_of_sight
+                    self.hcd[i] = coord_pair.ground_distance
+                    self.azimuth[i] = coord_pair.azimuth
+                    self.elevation[i] = coord_pair.elevation_approx
 
                     self.queue_csvs[i].push(dat)
 
@@ -600,7 +596,7 @@ class ProgramGUI(Program):
                      debug=USE_DEBUG)
 
     def stop(self):
-        for i in range(NUM_SERIAL):
+        for i in range(NUM_MAX_SERIAL):
             self.__stop(i)
             self.serial_ports[i].disconnect(destructor=True)
 
