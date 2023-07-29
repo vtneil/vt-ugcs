@@ -571,9 +571,9 @@ class ProgramGUI(Program):
                     print(f'{i}: {self.data_back}')
 
                     curr_coord = GeoCoordinate(
-                        dat_dict[self.kml_keys[i]['lat']],
-                        dat_dict[self.kml_keys[i]['lon']],
-                        dat_dict[self.kml_keys[i]['alt']]
+                        dat_dict[self.kml_keys[did]['lat']],
+                        dat_dict[self.kml_keys[did]['lon']],
+                        dat_dict[self.kml_keys[did]['alt']]
                     )
                     coord_pair = GeoPair(HOME_GEO, curr_coord)
 
