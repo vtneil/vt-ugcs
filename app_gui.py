@@ -80,8 +80,8 @@ class ProgramGUI(Program):
 
         self.to_plot: list = self.settings['plot']
         self.trim_length = self.settings['data_points']
-        self.all_charts = []
-        self.all_plots = []
+        self.all_charts_info = []
+        self.all_charts_obj = []
         self.data_ready = False
 
         # Generating information, keys for referencing
@@ -176,6 +176,9 @@ class ProgramGUI(Program):
         self.elevation = [0.0] * self.num_devs_geo
         self.los = [0.0] * self.num_devs_geo
         self.hcd = [0.0] * self.num_devs_geo
+        self.data_geo = Data(['cx', 'az', 'el', 'los', 'hcd'])
+        self.charts_geo_info = []
+        self.charts_geo_obj = []
 
     def __init_callbacks(self):
         app = self.app
@@ -192,7 +195,7 @@ class ProgramGUI(Program):
             })
 
             # BEGIN USER ADD OPTIONAL DATA SECTION
-            for i in reversed([0, 1]):
+            for i in reversed(range(len(self.data_format_dict))):
                 latest_data = add_front_df(latest_data, f'[{i}] Elevation', f'{self.elevation[i]}°')
                 latest_data = add_front_df(latest_data, f'[{i}] Azimuth', f'{self.azimuth[i]}°')
                 latest_data = add_front_df(latest_data, f'[{i}] Line of Sight', f'{self.los[i]} m')
@@ -363,14 +366,14 @@ class ProgramGUI(Program):
                             line_style=plot_item['style'],
                             plot_type=plot_type
                         )
-                        self.all_charts.append(Chart.dict_info(
+                        self.all_charts_info.append(Chart.dict_info(
                             x=plot_item['x'],
                             y=plot_item['y'],
                             z=__z_key,
                             style=plot_item['style'],
                             plot_type=plot_item['plot_type']
                         ))
-                        self.all_plots.append(__new_chart)
+                        self.all_charts_obj.append(__new_chart)
                     elif plot_type == Chart.PLOT_POLAR:
                         __new_chart = Component.make_plot_area(
                             data=self.data.df.tail(self.trim_length),
@@ -379,13 +382,13 @@ class ProgramGUI(Program):
                             line_style=plot_item['style'],
                             plot_type=plot_type
                         )
-                        self.all_charts.append(Chart.dict_info(
+                        self.all_charts_info.append(Chart.dict_info(
                             r=plot_item['r'],
                             theta=plot_item['theta'],
                             style=plot_item['style'],
                             plot_type=plot_item['plot_type']
                         ))
-                        self.all_plots.append(__new_chart)
+                        self.all_charts_obj.append(__new_chart)
                     elif plot_type == Chart.PLOT_MESH:
                         pass
                         # __new_chart = Chart.make_mesh_render()
@@ -394,6 +397,22 @@ class ProgramGUI(Program):
                         #     plot_type=plot_item['plot_type']
                         # ))
                         # self.all_plots.append(__new_chart)
+
+                # BEGIN USER ADD OPTIONAL PLOT SECTION
+                self.charts_geo_info.append(Chart.dict_info(
+                    r='cx',
+                    theta='az',
+                    style=Chart.STYLE_SCATTER,
+                    plot_type=Chart.PLOT_POLAR
+                ))
+                self.charts_geo_obj.append(Component.make_plot_area(
+                    data=self.data_geo.df,
+                    r_key='cx',
+                    theta_key='az',
+                    line_style=Chart.STYLE_SCATTER,
+                    plot_type=Chart.PLOT_POLAR
+                ))
+                # END USER ADD OPTIONAL PLOT SECTION
 
             # When Click Add XYZ Chart
             elif event_click_xyz:
@@ -405,18 +424,18 @@ class ProgramGUI(Program):
                     line_style=line_type,
                     plot_type=Chart.PLOT_XYZ
                 )
-                self.all_charts.append(Chart.dict_info(
+                self.all_charts_info.append(Chart.dict_info(
                     x=x_val,
                     y=y_vals,
                     z=z_val,
                     style=line_type,
                     plot_type=Chart.PLOT_XYZ
                 ))
-                self.all_plots.append(__new_chart)
+                self.all_charts_obj.append(__new_chart)
 
             # When Click Add Polar Chart
             elif event_click_polar:
-                self.all_charts.append(Chart.dict_info(
+                self.all_charts_info.append(Chart.dict_info(
                     r=r_val,
                     theta=theta_val,
                     style=polar_type,
@@ -429,16 +448,16 @@ class ProgramGUI(Program):
                     line_style=polar_type,
                     plot_type=Chart.PLOT_POLAR
                 )
-                self.all_plots.append(__new_chart)
+                self.all_charts_obj.append(__new_chart)
 
             # Data Polling/Updating
             elif event_polling and self.data_ready:
-                for i, __chart in enumerate(self.all_charts):
+                for i, __chart in enumerate(self.all_charts_info):
                     if __chart['plot_type'] in [Chart.PLOT_XYZ, Chart.PLOT_POLAR]:
                         # then plot
                         plot_data = self.data.df.tail(self.trim_length)
                         try:
-                            self.all_plots[i] = Component.make_plot_area(
+                            self.all_charts_obj[i] = Component.make_plot_area(
                                 data=plot_data,
                                 x_key=__chart['x'],
                                 y_keys=__chart['y'],
@@ -448,7 +467,7 @@ class ProgramGUI(Program):
                                 line_style=__chart['style'],
                                 plot_type=__chart['plot_type']
                             )
-                        except ValueError as e:
+                        except ValueError:
                             print(plot_data.dtypes)
                             for yk in __chart['y']:
                                 print(plot_data[yk])
@@ -457,7 +476,27 @@ class ProgramGUI(Program):
                         pass
                         # self.all_plots[i] = Chart.make_mesh_render()
 
-            return Content.unflatten(self.all_plots)
+                # BEGIN USER ADD OPTIONAL PLOT SECTION (Chart)
+                for i, __chart in enumerate(self.charts_geo_info):
+                    plot_data = self.data_geo.df
+                    try:
+                        self.charts_geo_obj[i] = Component.make_plot_area(
+                            data=plot_data,
+                            x_key=__chart['x'],
+                            y_keys=__chart['y'],
+                            z_key=__chart['z'],
+                            r_key=__chart['r'],
+                            theta_key=__chart['theta'],
+                            line_style=__chart['style'],
+                            plot_type=__chart['plot_type']
+                        )
+                    except ValueError:
+                        print(plot_data.dtypes)
+                        for yk in __chart['y']:
+                            print(plot_data[yk])
+                # END USER ADD OPTIONAL PLOT SECTION (Chart)
+
+            return Content.unflatten(self.all_charts_obj + self.charts_geo_obj)
 
         @app.callback(
             Output('hidden-div', 'children'),
@@ -546,6 +585,15 @@ class ProgramGUI(Program):
                     self.hcd[i] = coord_pair.ground_distance
                     self.azimuth[i] = coord_pair.azimuth
                     self.elevation[i] = coord_pair.elevation_approx
+                    # USER
+                    if i == 0:
+                        while self.data_geo.available():
+                            self.data_geo.pop()
+                        self.data_geo.push([5,
+                                            self.azimuth[0],
+                                            self.elevation[0],
+                                            self.los[0],
+                                            self.hcd[0]])
 
                     self.queue_csvs[i].push(dat)
 
@@ -553,7 +601,7 @@ class ProgramGUI(Program):
 
             self.data_ready = False
 
-            for i, __chart in enumerate(self.all_charts):
+            for i, __chart in enumerate(self.all_charts_info):
                 if __chart['plot_type'] in [Chart.PLOT_XYZ, Chart.PLOT_POLAR]:
                     # check for data validity before plot
                     while self.data.available():

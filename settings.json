@@ -8,78 +8,10 @@
             "lat": "latitude",
             "lon": "longitude",
             "alt": "altitude"
-        },
-        "1": {
-            "lat": "latitude",
-            "lon": "longitude",
-            "alt": "altitude"
         }
     },
     "data_points": 120,
-    "plot": [
-        {
-            "plot_type": "xyz",
-            "style": "scatter",
-            "x": {
-                "0": "counter"
-            },
-            "y": {
-                "0": [
-                    "altitude"
-                ]
-            }
-        },
-        {
-            "plot_type": "xyz",
-            "style": "scatter",
-            "x": {
-                "0": "counter"
-            },
-            "y": {
-                "0": [
-                    "x1"
-                ]
-            }
-        },
-        {
-            "plot_type": "xyz",
-            "style": "scatter",
-            "x": {
-                "0": "counter"
-            },
-            "y": {
-                "0": [
-                    "x2"
-                ]
-            }
-        },
-        {
-            "plot_type": "xyz",
-            "style": "scatter",
-            "x": {
-                "0": "counter"
-            },
-            "y": {
-                "0": [
-                    "altitude",
-                    "x1"
-                ]
-            }
-        },
-        {
-            "plot_type": "xyz",
-            "style": "scatter",
-            "x": {
-                "0": "x1"
-            },
-            "y": {
-                "0": [
-                    "altitude",
-                    "counter"
-                ]
-            }
-        }
-    ],
+    "plot": [],
     "state_key": "state",
     "state_name": {
         "1": "PRELAUNCH",
