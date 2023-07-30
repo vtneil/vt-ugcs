@@ -10,7 +10,7 @@
         "time_us",
         "latitude",
         "longitude",
-        "altitude_gps",
+        "altitude",
         "ax",
         "ay",
         "az",
@@ -27,7 +27,15 @@
         "dump5",
         "dump6",
         "dump7",
-        "altitude",
+        "altitude_valid",
         "batt_v"
+    ],
+    "1": [
+        "latitude",
+        "longitude",
+        "altitude",
+        "siv",
+        "time_ms",
+        "state"
     ]
 }

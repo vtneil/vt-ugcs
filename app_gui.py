@@ -399,19 +399,19 @@ class ProgramGUI(Program):
                         # self.all_plots.append(__new_chart)
 
                 # BEGIN USER ADD OPTIONAL PLOT SECTION
-                self.charts_geo_info.append(Chart.dict_info(
-                    r='cx',
-                    theta='az',
-                    style=Chart.STYLE_SCATTER,
-                    plot_type=Chart.PLOT_POLAR
-                ))
-                self.charts_geo_obj.append(Component.make_plot_area(
-                    data=self.data_geo.df,
-                    r_key='cx',
-                    theta_key='az',
-                    line_style=Chart.STYLE_SCATTER,
-                    plot_type=Chart.PLOT_POLAR
-                ))
+                # self.charts_geo_info.append(Chart.dict_info(
+                #     r='cx',
+                #     theta='az',
+                #     style=Chart.STYLE_SCATTER,
+                #     plot_type=Chart.PLOT_POLAR
+                # ))
+                # self.charts_geo_obj.append(Component.make_plot_area(
+                #     data=self.data_geo.df,
+                #     r_key='cx',
+                #     theta_key='az',
+                #     line_style=Chart.STYLE_SCATTER,
+                #     plot_type=Chart.PLOT_POLAR
+                # ))
                 # END USER ADD OPTIONAL PLOT SECTION
 
             # When Click Add XYZ Chart
@@ -477,23 +477,23 @@ class ProgramGUI(Program):
                         # self.all_plots[i] = Chart.make_mesh_render()
 
                 # BEGIN USER ADD OPTIONAL PLOT SECTION (Chart)
-                for i, __chart in enumerate(self.charts_geo_info):
-                    plot_data = self.data_geo.df
-                    try:
-                        self.charts_geo_obj[i] = Component.make_plot_area(
-                            data=plot_data,
-                            x_key=__chart['x'],
-                            y_keys=__chart['y'],
-                            z_key=__chart['z'],
-                            r_key=__chart['r'],
-                            theta_key=__chart['theta'],
-                            line_style=__chart['style'],
-                            plot_type=__chart['plot_type']
-                        )
-                    except ValueError:
-                        print(plot_data.dtypes)
-                        for yk in __chart['y']:
-                            print(plot_data[yk])
+                # for i, __chart in enumerate(self.charts_geo_info):
+                #     plot_data = self.data_geo.df
+                #     try:
+                #         self.charts_geo_obj[i] = Component.make_plot_area(
+                #             data=plot_data,
+                #             x_key=__chart['x'],
+                #             y_keys=__chart['y'],
+                #             z_key=__chart['z'],
+                #             r_key=__chart['r'],
+                #             theta_key=__chart['theta'],
+                #             line_style=__chart['style'],
+                #             plot_type=__chart['plot_type']
+                #         )
+                #     except ValueError:
+                #         print(plot_data.dtypes)
+                #         for yk in __chart['y']:
+                #             print(plot_data[yk])
                 # END USER ADD OPTIONAL PLOT SECTION (Chart)
 
             return Content.unflatten(self.all_charts_obj + self.charts_geo_obj)
