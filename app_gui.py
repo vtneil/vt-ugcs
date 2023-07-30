@@ -10,8 +10,8 @@ from deps.gui import Chart
 pd.set_option("display.max_colwidth", None)
 
 # Phimai Launch Station Location
-HOME_LATITUDE, HOME_LONGITUDE = 15.182228, 102.563697
-HOME_ALTITUDE = 210
+HOME_LATITUDE, HOME_LONGITUDE = 15.182212, 102.564062
+HOME_ALTITUDE = 212
 
 APP_NAME = __name__
 USE_DEBUG = False
