@@ -127,7 +127,7 @@ class BaseComponent:
         self.btn_add_chart_polar = dbc.Button('Add Chart to View', id='btn-add-chart-polar',
                                               className='mx-1 btn-primary')
 
-        self.btn_pop_chart = dbc.Button('Pop Last Data', id='btn-pop-chart',
+        self.btn_pop_chart = dbc.Button('Clear Data', id='btn-pop-chart',
                                         className='mx-1 btn-danger')
 
         self.sidebar_page1 = dbc.Card(dbc.CardBody([

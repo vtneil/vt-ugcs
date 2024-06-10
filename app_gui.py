@@ -341,7 +341,7 @@ class ProgramGUI(Program):
             ],
             [
                 Input(Component.interval_once, 'n_intervals'),
-                Input(Component.interval_fast, 'n_intervals'),
+                Input(Component.interval_slow, 'n_intervals'),
                 Input(Component.btn_add_chart_xyz, 'n_clicks'),
                 Input(Component.btn_add_chart_polar, 'n_clicks'),
             ],
@@ -362,7 +362,7 @@ class ProgramGUI(Program):
             event_first_load = (event == Component.interval_once.id and self.first_load)
             event_click_xyz = (event == Component.btn_add_chart_xyz.id and x_val and y_vals and line_type)
             event_click_polar = (event == Component.btn_add_chart_polar.id and r_val and theta_val and polar_type)
-            event_polling = (event == Component.interval_fast.id and not self.first_load)
+            event_polling = (event == Component.interval_slow.id and not self.first_load)
 
             # First Load
             if event_first_load:
@@ -517,7 +517,7 @@ class ProgramGUI(Program):
             Input(Component.btn_pop_chart, 'n_clicks')
         )
         def pop_data(_clicks):
-            if self.data.available():
+            while self.data.available():
                 self.data.pop()
             return []
 
