@@ -4,6 +4,7 @@
     "Timestamp",
     "Timestamp (microsecond)",
     "Milliseconds since boot",
+    "Packet Counter",
     "Program State",
     "GPS Latitude",
     "GPS Longitude",

@@ -3,8 +3,8 @@ import pandas
 from .__includes import *
 from .mychart import Chart
 
-INTERVAL_SLOW = 500
-INTERVAL_FAST = 200
+INTERVAL_SLOW = 1000
+INTERVAL_FAST = 500
 
 
 class BaseComponent:
@@ -36,18 +36,27 @@ class BaseComponent:
         self.interval_slow = dcc.Interval(
             id='interval-slow',
             interval=INTERVAL_SLOW,
+            disabled=True,
             n_intervals=0
         )
 
         self.interval_fast = dcc.Interval(
             id='interval-fast',
             interval=INTERVAL_FAST,
+            disabled=True,
             n_intervals=0
         )
 
         self.interval_once = dcc.Interval(
             id='interval-once',
             interval=INTERVAL_FAST,
+            n_intervals=0,
+            max_intervals=1
+        )
+
+        self.interval_load = dcc.Interval(
+            id='interval-load',
+            interval=2000,
             n_intervals=0,
             max_intervals=1
         )

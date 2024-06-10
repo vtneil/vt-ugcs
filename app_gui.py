@@ -10,7 +10,7 @@ from deps.gui import Chart
 pd.set_option("display.max_colwidth", None)
 
 APP_NAME = __name__
-USE_DEBUG = True
+USE_DEBUG = False
 USE_MOCK = False
 ALL_BAUD_OPT = [{'label': k, 'value': k} for k in ALL_BAUD_STR]
 
@@ -32,13 +32,14 @@ class ProgramGUI(Program):
 
     def __init__(self):
         # Flask App
-        self.app.layout = html.Div([
+        layout = html.Div([
             dbc.Container([
                 dcc.Location(id='url'),
                 MenuBar,
                 html.Div([
                     Content.content
                 ], className='mt-5 pt-5 pb-5'),
+                Component.interval_load,
                 Component.interval_slow,
                 Component.interval_fast,
                 Component.interval_once
@@ -46,7 +47,8 @@ class ProgramGUI(Program):
             html.Div([], id='hidden-div', style={'display': 'none'}),
             html.P('', id='data-counter', style={'display': 'none'}),
             html.Footer([html.P(FOOTER_TEXT, id='footer')]),
-        ], className='m-5')
+        ], id='overall', className='m-5')
+        self.app.layout = layout
 
         # Backend: General Components
         self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'), 'json')
@@ -176,6 +178,15 @@ class ProgramGUI(Program):
     def __init_callbacks(self):
         app = self.app
 
+        # Loading hold
+        @app.callback(
+            Output(Component.interval_fast, 'disabled'),
+            Output(Component.interval_slow, 'disabled'),
+            Input(Component.interval_load, 'n_intervals')
+        )
+        def done_loading(*_):
+            return False, False
+
         # Render Data table
         @app.callback(
             Output(Component.sidebar_dataframe, 'children'),
@@ -219,7 +230,7 @@ class ProgramGUI(Program):
             State(Component.uplink_dd, 'value')
         )
         def btn_submit_uplink(_, value: str):
-            if self.serial_ports[0].device is not None:
+            if self.serial_ports[0].device is not None and value is not None:
                 b = value.encode('ascii')
                 self.serial_ports[0].device.write(b)
 
@@ -229,7 +240,7 @@ class ProgramGUI(Program):
                 *(Output(dropdown_port, 'options') for dropdown_port in Component.dropdown_ports),
                 *(Output(dropdown_baud, 'options') for dropdown_baud in Component.dropdown_bauds)
             ],
-            Input(Component.interval_slow, 'n_intervals')
+            Input(Component.interval_fast, 'n_intervals')
         )
         def render_serial_options(_interval):
             self.serial_ports[0].refresh()
@@ -246,7 +257,7 @@ class ProgramGUI(Program):
                 *(Output(dropdown_baud, 'disabled') for dropdown_baud in Component.dropdown_bauds),
             ],
             [
-                Input(Component.interval_slow, 'n_intervals'),
+                Input(Component.interval_fast, 'n_intervals'),
                 *(Input(btn_connect, 'n_clicks') for btn_connect in Component.btn_connects),
                 *(Input(btn_disconnect, 'n_clicks') for btn_disconnect in Component.btn_disconnects),
             ],
@@ -330,7 +341,7 @@ class ProgramGUI(Program):
             ],
             [
                 Input(Component.interval_once, 'n_intervals'),
-                Input(Component.interval_slow, 'n_intervals'),
+                Input(Component.interval_fast, 'n_intervals'),
                 Input(Component.btn_add_chart_xyz, 'n_clicks'),
                 Input(Component.btn_add_chart_polar, 'n_clicks'),
             ],
@@ -351,7 +362,7 @@ class ProgramGUI(Program):
             event_first_load = (event == Component.interval_once.id and self.first_load)
             event_click_xyz = (event == Component.btn_add_chart_xyz.id and x_val and y_vals and line_type)
             event_click_polar = (event == Component.btn_add_chart_polar.id and r_val and theta_val and polar_type)
-            event_polling = (event == Component.interval_slow.id and not self.first_load)
+            event_polling = (event == Component.interval_fast.id and not self.first_load)
 
             # First Load
             if event_first_load:
@@ -643,7 +654,7 @@ class ProgramGUI(Program):
 
         self.backend_thread.start()
         self.app.run(host='localhost',
-                     port=8050,
+                     port=8080,
                      debug=USE_DEBUG)
 
     def stop(self):

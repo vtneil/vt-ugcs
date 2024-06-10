@@ -5,12 +5,12 @@
       "label": "Ping Transmitter"
     },
     {
-      "value": "cmd arm",
-      "label": "Arm Pyrotechnics"
-    },
-    {
       "value": "cmd disarm",
       "label": "Disarm and Safe"
+    },
+    {
+      "value": "cmd arm",
+      "label": "Arm Pyrotechnics"
     },
     {
       "value": "cmd pad",
@@ -19,6 +19,22 @@
     {
       "value": "cmd recover",
       "label": "Recovery Confirmation"
+    },
+    {
+      "value": "cmd zero",
+      "label": "Zero Ground-level altitude"
+    },
+    {
+      "value": "cmd manual-trigger-a",
+      "label": "[DANGER] Activate Pyro A"
+    },
+    {
+      "value": "cmd manual-trigger-b",
+      "label": "[DANGER] Activate Pyro B"
+    },
+    {
+      "value": "cmd manual-trigger-c",
+      "label": "[DANGER] Activate Pyro C"
     },
     {
       "value": "cmd sleep",

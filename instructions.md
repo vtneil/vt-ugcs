@@ -1,6 +1,6 @@
 # Ground Station Software
 
-Download at: https://github.com/vtneil/vnet-ugcs/releases/tag/alpha
+Download at: https://github.com/vtneil/vt-ugcs/releases/tag/alpha
 
 ## Instructions
 
