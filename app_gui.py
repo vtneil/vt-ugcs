@@ -9,28 +9,13 @@ from deps.gui import Chart
 
 pd.set_option("display.max_colwidth", None)
 
-# Phimai Launch Station Location
-HOME_LATITUDE, HOME_LONGITUDE = 15.182228, 102.563697
-HOME_ALTITUDE = 210
-
 APP_NAME = __name__
-USE_DEBUG = False
+USE_DEBUG = True
 USE_MOCK = False
 ALL_BAUD_OPT = [{'label': k, 'value': k} for k in ALL_BAUD_STR]
 
 if sys.version_info < (3, 10):
     raise AssertionError('Required Python 3.10 or newer, please install appropriate version!')
-
-if HOME_LATITUDE is None:
-    raise ValueError('Please define the station\'s latitude!')
-
-if HOME_LONGITUDE is None:
-    raise ValueError('Please define the station\'s longitude!')
-
-if HOME_LONGITUDE is None:
-    raise ValueError('Please define the station\'s altitude!')
-
-HOME_GEO = GeoCoordinate(HOME_LATITUDE, HOME_LONGITUDE, HOME_ALTITUDE)
 
 
 class ProgramGUI(Program):
@@ -66,9 +51,15 @@ class ProgramGUI(Program):
         # Backend: General Components
         self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'), 'json')
         self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.json'), 'json')
+        self.uplink_dict = PreferencesTree.from_file(os.path.abspath('uplink_command.json'), 'json')
         self.header = self.settings['header']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
+
+        # Home location
+        self.home_geo = GeoCoordinate(self.settings['home_position']['latitude'],
+                                      self.settings['home_position']['longitude'],
+                                      self.settings['home_position']['altitude'])
 
         self.kml_keys = {
             dev_id: {
@@ -154,12 +145,14 @@ class ProgramGUI(Program):
         # Program DataFrame
         self.data = Data(self.data_format_mod)
         self.data_len = tuple(len(self.data_format_dict.tree[e]) for e in self.data_format_dict.tree)
-        self.data_back = [0] * len(self.data_format_mod)
+        self.data_back = [None] * len(self.data_format_mod)
         self.data_no = 0
         self.first_load = True
 
         # Initialize Dash callbacks
         self.__init_callbacks()
+
+        Component.uplink_dd.options = self.uplink_dict['commands']
 
         # Backend Thread (Main program)
         self.backend_status = True
@@ -195,12 +188,11 @@ class ProgramGUI(Program):
             })
 
             # BEGIN USER ADD OPTIONAL DATA SECTION
-            for i in reversed(range(len(self.data_format_dict))):
-                latest_data = add_front_df(latest_data, f'[{i}] Elevation', f'{self.elevation[i]}°')
-                latest_data = add_front_df(latest_data, f'[{i}] Azimuth', f'{self.azimuth[i]}°')
-                latest_data = add_front_df(latest_data, f'[{i}] Line of Sight', f'{self.los[i]} m')
-                latest_data = add_front_df(latest_data, f'[{i}] Ground Distance', f'{self.hcd[i]} m')
-
+            # for i in reversed(range(len(self.data_format_dict))):
+            #     latest_data = add_front_df(latest_data, f'[{i}] Elevation', f'{self.elevation[i]}°')
+            #     latest_data = add_front_df(latest_data, f'[{i}] Azimuth', f'{self.azimuth[i]}°')
+            #     latest_data = add_front_df(latest_data, f'[{i}] Line of Sight', f'{self.los[i]} m')
+            #     latest_data = add_front_df(latest_data, f'[{i}] Ground Distance', f'{self.hcd[i]} m')
             # END USER ADD OPTIONAL DATA SECTION
 
             return dbc.Table.from_dataframe(
@@ -220,6 +212,16 @@ class ProgramGUI(Program):
                 return Content.settings
 
             return Content.page_404(url)
+
+        # Uplink on submit
+        @app.callback(
+            Input(Component.uplink_submit, 'n_clicks'),
+            State(Component.uplink_dd, 'value')
+        )
+        def btn_submit_uplink(_, value: str):
+            if self.serial_ports[0].device is not None:
+                b = value.encode('ascii')
+                self.serial_ports[0].device.write(b)
 
         # Refresh Serial port dropdown options
         @app.callback(
@@ -399,19 +401,19 @@ class ProgramGUI(Program):
                         # self.all_plots.append(__new_chart)
 
                 # BEGIN USER ADD OPTIONAL PLOT SECTION
-                self.charts_geo_info.append(Chart.dict_info(
-                    r='cx',
-                    theta='az',
-                    style=Chart.STYLE_SCATTER,
-                    plot_type=Chart.PLOT_POLAR
-                ))
-                self.charts_geo_obj.append(Component.make_plot_area(
-                    data=self.data_geo.df,
-                    r_key='cx',
-                    theta_key='az',
-                    line_style=Chart.STYLE_SCATTER,
-                    plot_type=Chart.PLOT_POLAR
-                ))
+                # self.charts_geo_info.append(Chart.dict_info(
+                #     r='cx',
+                #     theta='az',
+                #     style=Chart.STYLE_SCATTER,
+                #     plot_type=Chart.PLOT_POLAR
+                # ))
+                # self.charts_geo_obj.append(Component.make_plot_area(
+                #     data=self.data_geo.df,
+                #     r_key='cx',
+                #     theta_key='az',
+                #     line_style=Chart.STYLE_SCATTER,
+                #     plot_type=Chart.PLOT_POLAR
+                # ))
                 # END USER ADD OPTIONAL PLOT SECTION
 
             # When Click Add XYZ Chart
@@ -468,32 +470,33 @@ class ProgramGUI(Program):
                                 plot_type=__chart['plot_type']
                             )
                         except ValueError:
-                            print(plot_data.dtypes)
-                            for yk in __chart['y']:
-                                print(plot_data[yk])
+                            pass
+                            # print(plot_data.dtypes)
+                            # for yk in __chart['y']:
+                            #     print(plot_data[yk])
 
                     elif __chart['plot_type'] == Chart.PLOT_MESH:
                         pass
                         # self.all_plots[i] = Chart.make_mesh_render()
 
                 # BEGIN USER ADD OPTIONAL PLOT SECTION (Chart)
-                for i, __chart in enumerate(self.charts_geo_info):
-                    plot_data = self.data_geo.df
-                    try:
-                        self.charts_geo_obj[i] = Component.make_plot_area(
-                            data=plot_data,
-                            x_key=__chart['x'],
-                            y_keys=__chart['y'],
-                            z_key=__chart['z'],
-                            r_key=__chart['r'],
-                            theta_key=__chart['theta'],
-                            line_style=__chart['style'],
-                            plot_type=__chart['plot_type']
-                        )
-                    except ValueError:
-                        print(plot_data.dtypes)
-                        for yk in __chart['y']:
-                            print(plot_data[yk])
+                # for i, __chart in enumerate(self.charts_geo_info):
+                #     plot_data = self.data_geo.df
+                #     try:
+                #         self.charts_geo_obj[i] = Component.make_plot_area(
+                #             data=plot_data,
+                #             x_key=__chart['x'],
+                #             y_keys=__chart['y'],
+                #             z_key=__chart['z'],
+                #             r_key=__chart['r'],
+                #             theta_key=__chart['theta'],
+                #             line_style=__chart['style'],
+                #             plot_type=__chart['plot_type']
+                #         )
+                #     except ValueError:
+                #         print(plot_data.dtypes)
+                #         for yk in __chart['y']:
+                #             print(plot_data[yk])
                 # END USER ADD OPTIONAL PLOT SECTION (Chart)
 
             return Content.unflatten(self.all_charts_obj + self.charts_geo_obj)
@@ -575,7 +578,7 @@ class ProgramGUI(Program):
                         dat_dict[self.kml_keys[did]['lon']],
                         dat_dict[self.kml_keys[did]['alt']]
                     )
-                    coord_pair = GeoPair(HOME_GEO, curr_coord)
+                    coord_pair = GeoPair(self.home_geo, curr_coord)
 
                     self.queue_coords[i].push(
                         curr_coord

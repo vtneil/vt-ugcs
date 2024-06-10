@@ -75,34 +75,41 @@ class BaseComponent:
             html.Br()
         ]) for i in range(NUM_MAX_SERIAL)]
 
+        self.uplink_dd = dcc.Dropdown(options=[], id='dropdown-uplink', className='mx-1 btn-primary')
+        self.uplink_submit = dbc.Button('Send', id='btn-submit-uplink')
+        self.uplink_options = dbc.Row(children=[
+            dbc.Col(children=self.uplink_dd, width=9),
+            dbc.Col(children=self.uplink_submit)
+        ])
+
         self.sidebar_dataframe = html.Div([])
 
         self.dropdown_plot_x = dcc.Dropdown(
-            [], id='dropdown-plot-x'
+            options=[], id='dropdown-plot-x'
         )
 
         self.dropdown_plot_y = dcc.Dropdown(
-            [], id='dropdown-plot-y', multi=True
+            options=[], id='dropdown-plot-y', multi=True
         )
 
         self.dropdown_plot_z = dcc.Dropdown(
-            [], id='dropdown-plot-z'
+            options=[], id='dropdown-plot-z'
         )
 
         self.dropdown_plot_xyz_type = dcc.Dropdown(
-            [], id='dropdown-plot-xyz-type'
+            options=[], id='dropdown-plot-xyz-type'
         )
 
         self.dropdown_plot_r = dcc.Dropdown(
-            [], id='dropdown-plot-r'
+            options=[], id='dropdown-plot-r'
         )
 
         self.dropdown_plot_theta = dcc.Dropdown(
-            [], id='dropdown-plot-theta'
+            options=[], id='dropdown-plot-theta'
         )
 
         self.dropdown_plot_rt_type = dcc.Dropdown(
-            [], id='dropdown-plot-rt-type'
+            options=[], id='dropdown-plot-rt-type'
         )
 
         self.btn_add_chart_xyz = dbc.Button('Add Chart to View', id='btn-add-chart-xyz',
@@ -153,6 +160,10 @@ class BaseComponent:
         ])
 
         self.sidebar = html.Div([
+            html.H3('Uplink Command'),
+            self.uplink_options,
+            html.Hr(),
+
             html.H3('Tabular View'),
             self.sidebar_dataframe,
             html.Hr(),

@@ -1,4 +1,4 @@
-# APP_TITLE = 'VNET Universal Ground Control Station'
-APP_TITLE = 'VNET UGCS'
-FOOTER_TEXT = 'Vivatsathorn Thitasirivit (2023)'
+APP_TITLE = 'VT Universal Ground Control Station'
+# APP_TITLE = 'VT UGCS'
+FOOTER_TEXT = 'Vivatsathorn Thitasirivit (2024)'
 NUM_MAX_SERIAL = 4

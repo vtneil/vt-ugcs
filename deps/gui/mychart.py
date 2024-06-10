@@ -20,8 +20,8 @@ class Chart:
     @staticmethod
     def make_chart_title(y: str, x: str, z: str = None):
         if z is None:
-            return 'Y: [{}] - X: {}'.format(y, x)
-        return '({},{},{})'.format(x, y, z)
+            return f'Y: [{y}] - X: {x}'
+        return f'({x},{y},{z})'
 
     @staticmethod
     def make_line_chart_2d(data: pd.DataFrame, x_key: str, y_keys: list[str]):

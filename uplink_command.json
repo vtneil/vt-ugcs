@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "value": "cmd ping",
+      "label": "Ping Transmitter"
+    },
+    {
+      "value": "cmd arm",
+      "label": "Arm Pyrotechnics"
+    },
+    {
+      "value": "cmd disarm",
+      "label": "Disarm and Safe"
+    },
+    {
+      "value": "cmd pad",
+      "label": "T-60 Pad Sequence Start"
+    },
+    {
+      "value": "cmd recover",
+      "label": "Recovery Confirmation"
+    },
+    {
+      "value": "cmd sleep",
+      "label": "Standby Sleep (Power Saving)"
+    },
+    {
+      "value": "cmd reboot",
+      "label": "Reboot Transmitter"
+    },
+    {
+      "value": "cmd shutdown",
+      "label": "Shutdown Transmitter"
+    },
+    {
+      "value": "cmd clear",
+      "label": "Clear ACK/NACK Flags"
+    }
+  ]
+}

@@ -69,7 +69,7 @@ class ProgramCLI(Program):
             all_ports = [(i, k) for i, k in enumerate(self.port.port_pair.keys(), start=1)]
             print('----- Serial Devices -----')
             for i, k in all_ports:
-                print('[{}]\t{}'.format(i, k))
+                print(f'[{i}]\t{k}')
             ui = input('Enter a number or type \'r\' to refresh\n').strip()
             if ui.isdigit() and 0 < int(ui) < len(all_ports) + 1:
                 self.port_name = self.port.port_pair[all_ports[int(ui) - 1][-1]]

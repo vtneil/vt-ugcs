@@ -1,23 +1,30 @@
 {
-    "header": "PSG4B",
-    "delimiter": ",",
-    "file_name": "psg4b",
-    "file_extension": "csv",
-    "kml_keys": {
-        "0": {
-            "lat": "latitude",
-            "lon": "longitude",
-            "alt": "altitude"
-        }
-    },
-    "data_points": 120,
-    "plot": [],
-    "state_key": "state",
-    "state_name": {
-        "1": "PRELAUNCH",
-        "2": "ASCENT",
-        "3": "HAVEN",
-        "4": "BREEZE",
-        "5": "BIND"
+  "home_position": {
+    "latitude": 15.182228,
+    "longitude": 102.563697,
+    "altitude": 210.0
+  },
+  "header": "LUNA",
+  "delimiter": ",",
+  "file_name": "luna_data",
+  "file_extension": "csv",
+  "kml_keys": {
+    "0": {
+      "lat": "GPS Latitude",
+      "lon": "GPS Longitude",
+      "alt": "Reference Altitude (m)"
     }
+  },
+  "data_points": 120,
+  "plot": [
+    
+  ],
+  "state_key": "state",
+  "state_name": {
+    "1": "PRELAUNCH",
+    "2": "ASCENT",
+    "3": "HAVEN",
+    "4": "BREEZE",
+    "5": "BIND"
+  }
 }

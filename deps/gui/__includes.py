@@ -38,4 +38,4 @@ def add_front_df(df: pd.DataFrame, key: str | None, value: str | int | float | N
 
 
 def dev_field(device_id: int | str, field_name: str):
-    return 'd{}_{}'.format(device_id, field_name)
+    return f'[{device_id}] {field_name}'
