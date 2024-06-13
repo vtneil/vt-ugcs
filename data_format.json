@@ -6,6 +6,8 @@
     "Milliseconds since boot",
     "Packet Counter",
     "Program State",
+    "Pressure sensors mode",
+    "IMU sensors mode",
     "GPS Latitude",
     "GPS Longitude",
     "Reference Altitude (m)",

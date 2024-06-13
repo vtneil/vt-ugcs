@@ -25,6 +25,30 @@
       "label": "Zero Ground-level altitude"
     },
     {
+      "value": "cmd mode-pres-1",
+      "label": "First pressure sensor only"
+    },
+    {
+      "value": "cmd mode-pres-2",
+      "label": "Second pressure sensor only"
+    },
+    {
+      "value": "cmd mode-pres-f",
+      "label": "Fusion pressure sensor mode"
+    },
+    {
+      "value": "cmd mode-accel-1",
+      "label": "First IMU sensor only"
+    },
+    {
+      "value": "cmd mode-accel-2",
+      "label": "Second IMU sensor only"
+    },
+    {
+      "value": "cmd mode-accel-f",
+      "label": "Fusion IMU sensor mode"
+    },
+    {
       "value": "cmd manual-trigger-a",
       "label": "[DANGER] Activate Pyro A"
     },
