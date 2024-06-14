@@ -109,7 +109,10 @@ class Data:
 
     def __iadd__(self, other: list | tuple | np.ndarray):
         if other.__len__() == self.__dim:
-            self.__df.loc[self.__len__()] = other
+            try:
+                self.__df.loc[self.__len__()] = other
+            except Exception:
+                pass
             return self
 
     def __add__(self, other: list | tuple | np.ndarray):

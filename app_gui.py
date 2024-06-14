@@ -54,7 +54,8 @@ class ProgramGUI(Program):
         self.settings = PreferencesTree.from_file(os.path.abspath('settings.json'), 'json')
         self.data_format_dict = PreferencesTree.from_file(os.path.abspath('data_format.json'), 'json')
         self.uplink_dict = PreferencesTree.from_file(os.path.abspath('uplink_command.json'), 'json')
-        self.header = self.settings['header']
+        self.headers = self.settings['headers']
+        self.delimiters = self.settings['delimiters']
         self.file_name = self.settings['file_name']
         self.extension = self.settings['file_extension']
 
@@ -125,10 +126,15 @@ class ProgramGUI(Program):
 
         # Backend: Device 0 Data Parser and File Writer Components
         self.parsers = [
-            StringParser(self.data_format_dict[str(i)])
+            StringParser(
+                data_format=self.data_format_dict[str(i)],
+                delimiter=self.delimiters[str(i)],
+                header=self.headers[str(i)] if str(i) in self.headers else None
+            )
             if str(i) in self.data_format_dict.tree else None
             for i in range(NUM_MAX_SERIAL)
         ]
+
         self.writers = [FileWriter(__file__, self.file_name, self.extension, device_id=i) for i in
                         range(NUM_MAX_SERIAL)]
         self.queue_csvs = [Queue() for _ in range(NUM_MAX_SERIAL)]
@@ -570,47 +576,63 @@ class ProgramGUI(Program):
             self.__backend_mock()
 
         while self.backend_status:
-            for i, did in enumerate(self.kml_keys):
+            for i, did in enumerate(self.data_format_dict.tree):
                 if self.queue_serials[i].available():
+                    # <--- General data --->
                     dat_dict: dict = self.queue_serials[i].pop()
+
+                    # BEGIN USER DATA MODIFICATION
+                    if i == 1 and dat_dict['Altitude (m)'] is not None:
+                        try:
+                            dat_dict['Altitude (m)'] = dat_dict['Altitude (m)'] * 0.3048
+                        except Exception:
+                            pass
+                    # END USER DATA MODIFICATION
+
                     dat = list(dat_dict.values())
+
                     if i == 0:
                         start_idx = 0
                     else:
                         start_idx = self.data_len[i - 1]
+
+                    valid_count = 0
                     for j, x in enumerate(dat, start_idx):
-                        self.data_back[j] = x
-                    self.data.push(self.data_back)
+                        if x is not None:
+                            self.data_back[j] = x
+                            valid_count += 1
 
-                    print(f'{i}: {self.data_back}')
+                    if valid_count > 0:
+                        self.data.push(self.data_back)
+                        print(f'Update from {i} -> {self.data_back}')
 
-                    curr_coord = GeoCoordinate(
-                        dat_dict[self.kml_keys[did]['lat']],
-                        dat_dict[self.kml_keys[did]['lon']],
-                        dat_dict[self.kml_keys[did]['alt']]
-                    )
-                    coord_pair = GeoPair(self.home_geo, curr_coord)
+                    # <--- Begin coordinate data --->
+                    if did in self.kml_keys:
+                        curr_coord = GeoCoordinate(
+                            dat_dict[self.kml_keys[did]['lat']],
+                            dat_dict[self.kml_keys[did]['lon']],
+                            dat_dict[self.kml_keys[did]['alt']]
+                        )
+                        self.queue_coords[i].push(curr_coord)
 
-                    self.queue_coords[i].push(
-                        curr_coord
-                    )
+                        coord_pair = GeoPair(self.home_geo, curr_coord)
+                        self.los[i] = coord_pair.line_of_sight
+                        self.hcd[i] = coord_pair.ground_distance
+                        self.azimuth[i] = coord_pair.azimuth
+                        self.elevation[i] = coord_pair.elevation_approx
 
-                    self.los[i] = coord_pair.line_of_sight
-                    self.hcd[i] = coord_pair.ground_distance
-                    self.azimuth[i] = coord_pair.azimuth
-                    self.elevation[i] = coord_pair.elevation_approx
-                    # USER
-                    if i == 0:
-                        while self.data_geo.available():
-                            self.data_geo.pop()
-                        self.data_geo.push([5,
-                                            self.azimuth[0],
-                                            self.elevation[0],
-                                            self.los[0],
-                                            self.hcd[0]])
+                        # USER
+                        if i == 0:
+                            while self.data_geo.available():
+                                self.data_geo.pop()
+                            self.data_geo.push([5,
+                                                self.azimuth[0],
+                                                self.elevation[0],
+                                                self.los[0],
+                                                self.hcd[0]])
+                    # <--- End coordinate data --->
 
                     self.queue_csvs[i].push(dat)
-
                     self.data_no += 1
 
             self.data_ready = False

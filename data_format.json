@@ -1,6 +1,5 @@
 {
   "0": [
-    "Team ID",
     "Timestamp",
     "Timestamp (microsecond)",
     "Milliseconds since boot",
@@ -39,5 +38,21 @@
     "Battery Voltage",
     "Last ACK",
     "Last NACK"
+  ],
+  "1": [
+    "Packet length",
+    "Year",
+    "Month",
+    "Day",
+    "Time",
+    "CRC Status",
+    "Tracker Header",
+    "Tracker Name",
+    "Altitude Header",
+    "Altitude (m)",
+    "Latitude Header",
+    "Latitude",
+    "Longitude Header",
+    "Longitude"
   ]
 }

@@ -242,9 +242,6 @@ class Content:
     content = html.Div([], id='page-content')
 
     plot = html.Div([dbc.Container([
-        h2('Live Plot'),
-        dbc.Row([]),
-        html.Hr(),
         dbc.Row([
             dbc.Col(Component.sidebar, width=3),
             dbc.Col(Component.plot_area, width=9),

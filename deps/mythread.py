@@ -46,6 +46,8 @@ class ThreadSerial(ThreadBase):
             msg = self.__reader.get_message()
             if len(msg) > 0:
                 parsed_msg = self.__parser.parse(msg)
+                print(msg)
+                print(parsed_msg)
                 self.__queue.push(parsed_msg)
 
     @property

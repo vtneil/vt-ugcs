@@ -1,11 +1,17 @@
 {
   "home_position": {
-    "latitude": 15.182228,
-    "longitude": 102.563697,
-    "altitude": 210.0
+    "latitude": 32.940366,
+    "longitude": -106.921924,
+    "altitude": 1383.0
   },
-  "header": "LUNA",
-  "delimiter": ",",
+  "headers": {
+    "0": "<45>,",
+    "1": "@ GPS_STAT "
+  },
+  "delimiters": {
+    "0": ",",
+    "1": " "
+  },
   "file_name": "luna_data",
   "file_extension": "csv",
   "kml_keys": {
@@ -13,9 +19,14 @@
       "lat": "GPS Latitude",
       "lon": "GPS Longitude",
       "alt": "Reference Altitude (m)"
+    },
+    "1": {
+      "lat": "Latitude",
+      "lon": "Longitude",
+      "alt": "Altitude (m)"
     }
   },
-  "data_points": 120,
+  "data_points": 720,
   "plot": [
     {
       "plot_type": "xyz",

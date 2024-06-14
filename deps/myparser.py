@@ -1,5 +1,6 @@
 from .base.__Parser import *
 from .base.__CustomException import ConstructorException
+import re
 
 
 class StringParser(ParserBase):
@@ -64,8 +65,13 @@ class StringParser(ParserBase):
             return self.__header + __payload
         return self.__header + __payload + self.__tail
 
+    def __remove_consecutive_delimiter(self, __data: str):
+        pattern = re.escape(self.__delimiter) + '+'
+        return re.sub(pattern, self.__delimiter, __data)
+
     def __parse_delim_only(self, __data: str):
-        __data_list = __data.split(self.__delimiter)
+        __data_cleaned = self.__remove_consecutive_delimiter(__data)
+        __data_list = __data_cleaned.split(self.__delimiter)
         __data_dict = self.make_blank()
         for k, v in zip(__data_dict.keys(), __data_list):
             __data_dict[k] = self.final_type(v)
