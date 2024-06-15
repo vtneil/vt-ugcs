@@ -111,6 +111,18 @@
           "ICM20948 Gyro. (Z)"
         ]
       }
+    },
+    {
+      "plot_type": "xyz",
+      "style": "line",
+      "x": {
+        "0": "Packet Counter"
+      },
+      "y": {
+        "1": [
+          "Altitude (m)"
+        ]
+      }
     }
   ],
   "state_key": "state",

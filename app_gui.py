@@ -523,8 +523,7 @@ class ProgramGUI(Program):
             Input(Component.btn_pop_chart, 'n_clicks')
         )
         def pop_data(_clicks):
-            while self.data.available():
-                self.data.pop()
+            self.data.clear()
             return []
 
     def __start(self, i):

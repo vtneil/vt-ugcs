@@ -102,7 +102,7 @@ class Data:
         return self.__len__() > 0
 
     def clear(self):
-        pass
+        self.__df = self.__df.head(0)
 
     def __getitem__(self, item):
         return self.__df.__getitem__(item)
