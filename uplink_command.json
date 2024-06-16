@@ -49,6 +49,10 @@
       "label": "Fusion IMU sensor mode"
     },
     {
+      "value": "cmd launch-override",
+      "label": "[DANGER] Manual launch detection"
+    },
+    {
       "value": "cmd manual-trigger-a",
       "label": "[DANGER] Activate Pyro A"
     },

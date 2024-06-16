@@ -26,7 +26,7 @@
       "alt": "Altitude (m)"
     }
   },
-  "data_points": 720,
+  "data_points": 150,
   "plot": [
     {
       "plot_type": "xyz",
@@ -109,18 +109,6 @@
           "ICM20948 Gyro. (X)",
           "ICM20948 Gyro. (Y)",
           "ICM20948 Gyro. (Z)"
-        ]
-      }
-    },
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "1": [
-          "Altitude (m)"
         ]
       }
     }
