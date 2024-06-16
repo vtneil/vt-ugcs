@@ -5,6 +5,10 @@
       "label": "Ping Transmitter"
     },
     {
+      "value": "cmd shutup",
+      "label": "Toggle buzzer (shutup)"
+    },
+    {
       "value": "cmd disarm",
       "label": "Disarm and Safe"
     },
