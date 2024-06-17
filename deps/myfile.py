@@ -69,9 +69,14 @@ class FileUtil:
     @staticmethod
     def new_filename(filename: str):
         dpos = filename.rfind('.')
-        idx = 0
-        while os.path.isfile(fname := '{}_{}.{}'.format(filename[:dpos], idx, filename[dpos + 1:])):
-            idx += 1
+        if dpos != -1:
+            idx = 0
+            while os.path.isfile(fname := f'{filename[:dpos]}_{idx}.{filename[dpos + 1:]}'):
+                idx += 1
+        else:
+            idx = 0
+            while os.path.isfile(fname := f'{filename}_{idx}'):
+                idx += 1
         return fname
 
     @staticmethod
