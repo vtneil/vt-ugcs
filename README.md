@@ -1,4 +1,4 @@
-# VT UGCS
+# VT UGCS (!! Moved to [GitLab](https://gitlab.com/vtneil/vt-ugcs) !!)
 
 A universal ground control station (GCS) GUI with Plotly dash framework.
 (The old version CUGS-V1 used QT framework.) It is equipped with newly 
