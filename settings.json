@@ -1,117 +1,77 @@
 {
   "home_position": {
-    "latitude": 32.940366,
-    "longitude": -106.921924,
-    "altitude": 1383.0
+    "latitude": 15.0,
+    "longitude": 100.0,
+    "altitude": 200.0
   },
   "headers": {
-    "0": "<45>,",
-    "1": "@ GPS_STAT "
   },
   "delimiters": {
-    "0": ",",
-    "1": " "
+    "0": ","
   },
-  "file_name": "luna_data",
+  "file_name": "balloon",
   "file_extension": "csv",
   "kml_keys": {
     "0": {
-      "lat": "GPS Latitude",
-      "lon": "GPS Longitude",
-      "alt": "Reference Altitude (m)"
-    },
-    "1": {
-      "lat": "Latitude",
-      "lon": "Longitude",
-      "alt": "Altitude (m)"
+      "lat": "latitude",
+      "lon": "longitude",
+      "alt": "altitude"
     }
   },
   "data_points": 720,
   "plot": [
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "0": [
-          "Reference Altitude (m)",
-          "MS#1 Barometric Altitude",
-          "MS#2 Barometric Altitude"
-        ]
-      }
-    },
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "0": [
-          "ICM42688 Accel. (X)",
-          "ICM42688 Accel. (Y)",
-          "ICM42688 Accel. (Z)"
-        ]
-      }
-    },
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "0": [
-          "ICM20948 Accel. (X)",
-          "ICM20948 Accel. (Y)",
-          "ICM20948 Accel. (Z)"
-        ]
-      }
-    },
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "0": [
-          "Pyro A Continuity",
-          "Pyro B Continuity",
-          "Pyro C Continuity"
-        ]
-      }
-    },
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "0": [
-          "ICM42688 Gyro. (X)",
-          "ICM42688 Gyro. (Y)",
-          "ICM42688 Gyro. (Z)"
-        ]
-      }
-    },
-    {
-      "plot_type": "xyz",
-      "style": "line",
-      "x": {
-        "0": "Packet Counter"
-      },
-      "y": {
-        "0": [
-          "ICM20948 Gyro. (X)",
-          "ICM20948 Gyro. (Y)",
-          "ICM20948 Gyro. (Z)"
-        ]
-      }
-    }
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": [
+                    "altitude",
+                    "altitude_sec",
+                    "altitude_pht",
+                    "altitude_pht_ext"
+                ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": [
+                    "humidity_pht",
+                    "humidity_pht_ext"
+                ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": [
+                    "temperature_pht",
+                    "temperature_pht_ext",
+                    "temperature_probe"
+                ]
+            }
+        },
+        {
+            "plot_type": "xyz",
+            "style": "line",
+            "x": {
+                "0": "counter"
+            },
+            "y": {
+                "0": ["battery_volt"]
+            }
+        }
   ],
   "state_key": "state",
   "state_name": {
